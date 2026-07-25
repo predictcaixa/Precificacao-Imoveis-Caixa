@@ -1,0 +1,5 @@
+ DESENVOLVIMENTO DE UM MODELO DE MACHINE LEARNING
+
+Desde os tempos remotos o homem buscou medida para avaliar e precificar os seus bens. Pois, o valor do bem é diretamente proporcional a avaliação na qual aquele bem está sendo avaliado. Pensando nisso a Caixa Económica Federal está lançando um concurso para construção de modelo para precificar imóveis.
+
+Neste projeto está sendo desenvolvido um modelo de Machine Learning para precificar imóveis nas cidades Brasileiras.
