@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ImóvelML — Precificação com Machine Learning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f14;
+      --bg2:       #141720;
+      --bg3:       #1c202c;
+      --bg4:       #232838;
+      --border:    rgba(255,255,255,0.07);
+      --border2:   rgba(255,255,255,0.13);
+      --text:      #e8eaf2;
+      --muted:     #7a7f96;
+      --accent:    #5b8fff;
+      --accent2:   #3ecf8e;
+      --warn:      #f5a623;
+      --danger:    #e05c5c;
+      --radius:    12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── LAYOUT ── */
+    .shell { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 220px; flex-shrink: 0;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 1.5rem 0;
+      position: fixed; height: 100vh; overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .sidebar-logo .icon {
+      width: 34px; height: 34px;
+      background: var(--accent);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .sidebar-logo span { font-size: 15px; font-weight: 600; letter-spacing: -.3px; }
+    .sidebar-logo small { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
+
+    .nav-section { padding: 0 .75rem .5rem; }
+    .nav-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: .5rem .5rem .25rem; }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: .55rem .75rem; border-radius: var(--radius-sm);
+      cursor: pointer; color: var(--muted);
+      font-size: 13.5px; font-weight: 500;
+      transition: all .15s; margin-bottom: 2px;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+    .nav-item.active { background: rgba(91,143,255,.15); color: var(--accent); }
+    .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    .main { margin-left: 220px; flex: 1; padding: 2rem 2.5rem; max-width: 1200px; }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+    .topbar h1 { font-size: 20px; font-weight: 600; }
+    .topbar p  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .badge {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; background: rgba(62,207,142,.15); color: var(--accent2);
+      border: 1px solid rgba(62,207,142,.25);
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+    }
+    .card-title { font-size: 13px; color: var(--muted); margin-bottom: .75rem; font-weight: 500; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem 1.25rem;
+    }
+    .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+    .stat-value { font-size: 24px; font-weight: 600; letter-spacing: -.5px; }
+    .stat-sub   { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .stat-up    { color: var(--accent2); }
+    .stat-down  { color: var(--danger); }
+
+    /* ── FORM ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
+    label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    select, input[type=number], input[type=text] {
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); padding: 9px 12px;
+      color: var(--text); font-family: inherit; font-size: 14px;
+      outline: none; transition: border-color .15s;
+      -webkit-appearance: none;
+    }
+    select:focus, input:focus { border-color: var(--accent); }
+
+    .slider-wrap { display: flex; align-items: center; gap: 12px; }
+    .slider-val { font-size: 14px; font-weight: 600; min-width: 52px; text-align: right; color: var(--accent); font-family: 'DM Mono', monospace; }
+    input[type=range] {
+      flex: 1; -webkit-appearance: none; height: 4px;
+      border-radius: 2px; background: var(--bg4); outline: none; border: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px;
+      border-radius: 50%; background: var(--accent); cursor: pointer;
+      box-shadow: 0 0 0 3px rgba(91,143,255,.2);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px; border-radius: var(--radius-sm);
+      font-size: 13.5px; font-weight: 600; cursor: pointer;
+      border: none; font-family: inherit; transition: all .15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+    .btn-ghost:hover { background: var(--bg4); }
+    .btn-success { background: rgba(62,207,142,.2); color: var(--accent2); border: 1px solid rgba(62,207,142,.3); }
+
+    /* ── RESULT ── */
+    .result-box {
+      background: linear-gradient(135deg, rgba(91,143,255,.12) 0%, rgba(62,207,142,.08) 100%);
+      border: 1px solid rgba(91,143,255,.25);
+      border-radius: var(--radius); padding: 1.5rem;
+      text-align: center; margin-bottom: 1.5rem;
+    }
+    .result-label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+    .result-price { font-size: 42px; font-weight: 600; letter-spacing: -1.5px; color: var(--accent); font-family: 'DM Mono', monospace; }
+    .result-m2 { font-size: 14px; color: var(--muted); margin-top: 4px; }
+    .result-range { display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .result-range-item { text-align: center; }
+    .result-range-item small { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .result-range-item strong { font-size: 15px; font-family: 'DM Mono', monospace; }
+
+    /* ── FEATURE BARS ── */
+    .feat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .feat-name { font-size: 12px; color: var(--muted); width: 130px; flex-shrink: 0; }
+    .feat-bar-wrap { flex: 1; background: var(--bg3); border-radius: 3px; height: 5px; }
+    .feat-bar { height: 5px; border-radius: 3px; transition: width .4s; }
+    .feat-val { font-size: 12px; font-family: 'DM Mono', monospace; min-width: 70px; text-align: right; }
+
+    /* ── TABLE ── */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 20px;
+    }
+    .tag-centro  { background: rgba(91,143,255,.15); color: #7aaeff; }
+    .tag-america { background: rgba(62,207,142,.15); color: #5dd4a0; }
+    .tag-anita   { background: rgba(245,166,35,.15); color: #f5c06a; }
+    .tag-norte   { background: rgba(186,117,23,.15); color: #d4956e; }
+    .tag-sul     { background: rgba(155,89,182,.15); color: #c39de0; }
+
+    /* ── TABS ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── REGION CARDS ── */
+    .region-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .region-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem;
+      cursor: pointer; transition: border-color .2s;
+    }
+    .region-card:hover { border-color: var(--border2); }
+    .region-card .dot { width: 8px; height: 8px; border-radius: 50%; margin-bottom: 10px; }
+    .region-card .r-name { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .region-card .r-price { font-size: 17px; font-weight: 600; font-family: 'DM Mono', monospace; }
+    .region-card .r-m2 { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    /* ── REPORT ── */
+    .report-output {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      margin-top: 1.5rem; display: none;
+    }
+    .report-section { margin-bottom: 1.5rem; }
+    .report-section h3 { font-size: 14px; font-weight: 600; margin-bottom: .75rem; display: flex; align-items: center; gap: 8px; }
+    .report-mini-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+    .report-mini { background: var(--bg3); border-radius: var(--radius-sm); padding: 10px 12px; }
+    .report-mini small { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .report-mini strong { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+    .loading { display: none; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+    .loading.show { display: flex; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+
+    .api-url {
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); padding: 8px 12px;
+      color: var(--accent2); margin-bottom: .5rem;
+    }
+
+    @media(max-width:900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1.25rem; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .region-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon">🏠</div>
+      <div>
+        <span>ImóvelML</span>
+        <small>Joinville, SC</small>
+      </div>
+    </div>
+    <nav class="nav-section">
+      <div class="nav-label">Módulos</div>
+      <button class="nav-item active" onclick="goView('predictor', this)"><span class="dot"></span>Preditor de Preço</button>
+      <button class="nav-item" onclick="goView('regioes', this)"><span class="dot"></span>Análise por Região</button>
+      <button class="nav-item" onclick="goView('batch', this)"><span class="dot"></span>Predição em Lote</button>
+      <button class="nav-item" onclick="goView('relatorio', this)"><span class="dot"></span>Relatório</button>
+      <button class="nav-item" onclick="goView('modelo', this)"><span class="dot"></span>Métricas do Modelo</button>
+      <button class="nav-item" onclick="goView('api', this)"><span class="dot"></span>Documentação API</button>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ══════════════════════════════════════════
+         VIEW: PREDITOR
+    ══════════════════════════════════════════ -->
+    <div id="view-predictor" class="view active">
+      <div class="topbar">
+        <div>
+          <h1>Preditor de Preço</h1>
+          <p>Estimativa com Regressão Ridge — R² = <span id="hdr-r2">0.93</span></p>
+        </div>
+        <span class="badge">🟢 Modelo ativo</span>
+      </div>
+
+      <div class="form-grid">
+        <!-- Formulário -->
+        <div class="card">
+          <div class="card-title">Características do imóvel</div>
+
+          <div class="form-group">
+            <label>Região</label>
+            <select id="f-regiao" onchange="calcular()">
+              <option value="centro">Centro</option>
+              <option value="america">América</option>
+              <option value="anita">Anita Garibaldi</option>
+              <option value="norte">Zona Norte</option>
+              <option value="sul">Zona Sul</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Área (m²)</label>
+            <div class="slider-wrap">
+              <input type="range" min="30" max="300" value="85" step="5" id="f-area" oninput="sv('f-area','sv-area','m²');calcular()">
+              <span class="slider-val" id="sv-area">85m²</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Quartos</label>
+            <div class="slider-wrap">
+              <input type="range" min="1" max="6" value="3" step="1" id="f-quartos" oninput="sv('f-quartos','sv-quartos','');calcular()">
+              <span class="slider-val" id="sv-quartos">3</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Banheiros</label>
+            <div class="slider-wrap">
+              <input type="range" min="1" max="5" value="2" step="1" id="f-banheiros" oninput="sv('f-banheiros','sv-banheiros','');calcular()">
+              <span class="slider-val" id="sv-banheiros">2</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Vagas de garagem</label>
+            <div class="slider-wrap">
+              <input type="range" min="0" max="4" value="1" step="1" id="f-vagas" oninput="sv('f-vagas','sv-vagas','');calcular()">
+              <span class="slider-val" id="sv-vagas">1</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Idade do imóvel (anos)</label>
+            <div class="slider-wrap">
+              <input type="range" min="0" max="40" value="5" step="1" id="f-idade" oninput="sv('f-idade','sv-idade','a');calcular()">
+              <span class="slider-val" id="sv-idade">5a</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-top:.5rem;">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Suítes</label>
+              <div class="slider-wrap">
+                <input type="range" min="0" max="4" value="1" step="1" id="f-suite" oninput="sv('f-suite','sv-suite','');calcular()">
+                <span class="slider-val" id="sv-suite">1</span>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Sacadas</label>
+              <div class="slider-wrap">
+                <input type="range" min="0" max="3" value="1" step="1" id="f-sacada" oninput="sv('f-sacada','sv-sacada','');calcular()">
+                <span class="slider-val" id="sv-sacada">1</span>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Piscina</label>
+              <div class="slider-wrap">
+                <input type="range" min="0" max="1" value="0" step="1" id="f-piscina" oninput="sv('f-piscina','sv-piscina','');calcular()">
+                <span class="slider-val" id="sv-piscina">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultado -->
+        <div>
+          <div class="result-box">
+            <div class="result-label">Preço estimado</div>
+            <div class="result-price" id="r-preco">R$ 0</div>
+            <div class="result-m2" id="r-m2">R$ 0/m²</div>
+            <div class="result-range">
+              <div class="result-range-item">
+                <small>Mínimo estimado</small>
+                <strong id="r-min">—</strong>
+              </div>
+              <div class="result-range-item">
+                <small>Máximo estimado</small>
+                <strong id="r-max">—</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:1rem;">
+            <div class="card-title">Contribuição de cada feature</div>
+            <div id="feat-bars"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Imóveis comparáveis no dataset</div>
+            <div id="comparaveis"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         VIEW: REGIÕES
+    ══════════════════════════════════════════ -->
+    <div id="view-regioes" class="view">
+      <div class="topbar"><div><h1>Análise por Região</h1><p>Estatísticas do dataset de treinamento</p></div></div>
+      <div class="region-grid" id="region-cards"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="card">
+          <div class="card-title">Preço médio por região (R$)</div>
+          <div style="position:relative;height:240px;"><canvas id="chart-reg-preco" role="img" aria-label="Gráfico preço médio por região">Preços por região.</canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Preço médio/m² por região</div>
+          <div style="position:relative;height:240px;"><canvas id="chart-reg-m2" role="img" aria-label="Gráfico preço por m² por região">Preço m² por região.</canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         VIEW: BATCH
+    ══════════════════════════════════════════ -->
+    <div id="view-batch" class="view">
+      <div class="topbar"><div><h1>Predição em Lote</h1><p>Insira múltiplos imóveis em formato JSON</p></div></div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-title">JSON de entrada (lista de imóveis)</div>
+        <textarea id="batch-input" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;min-height:200px;outline:none;resize:vertical;">[
+  {"regiao":"centro",  "area":90,  "quartos":3,"banheiros":2,"vagas":1,"idade":5,"suite":1,"sacada":1,"piscina":0},
+  {"regiao":"america", "area":70,  "quartos":2,"banheiros":1,"vagas":1,"idade":10,"suite":0,"sacada":0,"piscina":0},
+  {"regiao":"norte",   "area":120, "quartos":4,"banheiros":3,"vagas":2,"idade":3,"suite":2,"sacada":1,"piscina":0},
+  {"regiao":"sul",     "area":55,  "quartos":2,"banheiros":1,"vagas":0,"idade":18,"suite":0,"sacada":0,"piscina":0}
+]</textarea>
+        <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem;">
+          <button class="btn btn-primary" onclick="runBatch()">▶ Calcular todos</button>
+          <div class="loading" id="batch-loading"><div class="spinner"></div>Processando...</div>
+        </div>
+      </div>
+      <div id="batch-result" style="display:none;" class="card">
+        <div class="card-title">Resultados</div>
+        <div style="overflow-x:auto;"><table id="batch-table"></table></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         VIEW: RELATÓRIO
+    ══════════════════════════════════════════ -->
+    <div id="view-relatorio" class="view">
+      <div class="topbar"><div><h1>Relatório de Precificação</h1><p>Análise de perfis por região</p></div></div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-title">Parâmetros do relatório</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Quartos mín.</label>
+            <input type="number" id="rel-qmin" value="1" min="1" max="5">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Quartos máx.</label>
+            <input type="number" id="rel-qmax" value="5" min="1" max="6">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Área máx. (m²)</label>
+            <input type="number" id="rel-amax" value="500" min="30" max="1000">
+          </div>
+        </div>
+        <div style="display:flex;gap:.75rem;">
+          <button class="btn btn-primary" onclick="gerarRelatorio()">📊 Gerar relatório</button>
+          <button class="btn btn-ghost" onclick="exportarCSV()">⬇ Exportar CSV</button>
+          <div class="loading" id="rel-loading"><div class="spinner"></div>Gerando...</div>
+        </div>
+      </div>
+      <div class="report-output" id="report-output"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         VIEW: MODELO
+    ══════════════════════════════════════════ -->
+    <div id="view-modelo" class="view">
+      <div class="topbar"><div><h1>Métricas do Modelo</h1><p>Avaliação dos algoritmos de ML treinados</p></div></div>
+      <div class="stat-grid" id="modelo-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="card">
+          <div class="card-title">Comparativo de modelos — R²</div>
+          <div style="position:relative;height:220px;"><canvas id="chart-modelos" role="img" aria-label="Comparativo R² dos modelos">Métricas dos modelos.</canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Importância de features — Random Forest</div>
+          <div id="imp-bars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         VIEW: API
+    ══════════════════════════════════════════ -->
+    <div id="view-api" class="view">
+      <div class="topbar"><div><h1>Documentação da API</h1><p>Como integrar o ImóvelML à sua aplicação</p></div></div>
+      <div style="display:grid;gap:1rem;">
+        <div class="card">
+          <div class="card-title">Base URL</div>
+          <div class="api-url">http://localhost:8000</div>
+          <p style="font-size:13px;color:var(--muted);">Acesse <strong style="color:var(--accent)">http://localhost:8000/docs</strong> para o Swagger UI interativo gerado automaticamente pelo FastAPI.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Endpoints disponíveis</div>
+          <table>
+            <thead><tr><th>Método</th><th>Rota</th><th>Descrição</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tag" style="background:rgba(62,207,142,.15);color:var(--accent2);">GET</span></td><td style="font-family:monospace;">/</td><td>Health check</td></tr>
+              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/predict</td><td>Predição de um imóvel</td></tr>
+              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/predict/batch</td><td>Predição em lote (até 100)</td></tr>
+              <tr><td><span class="tag" style="background:rgba(62,207,142,.15);color:var(--accent2);">GET</span></td><td style="font-family:monospace;">/regioes/stats</td><td>Estatísticas por região</td></tr>
+              <tr><td><span class="tag" style="background:rgba(62,207,142,.15);color:var(--accent2);">GET</span></td><td style="font-family:monospace;">/modelo/info</td><td>Métricas e metadados do modelo</td></tr>
+              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/relatorio</td><td>Gerar relatório por região</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-title">Exemplo — POST /predict</div>
+          <pre style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent2);background:var(--bg3);padding:1rem;border-radius:var(--radius-sm);overflow-x:auto;">curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "regiao":    "centro",
+    "area":      90,
+    "quartos":   3,
+    "banheiros": 2,
+    "vagas":     1,
+    "idade":     5,
+    "suite":     1,
+    "sacada":    1,
+    "piscina":   0
+  }'</pre>
+        </div>
+        <div class="card">
+          <div class="card-title">Exemplo — Resposta /predict</div>
+          <pre style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text);background:var(--bg3);padding:1rem;border-radius:var(--radius-sm);overflow-x:auto;" id="api-example-resp">{
+  "preco_estimado":   548320.00,
+  "intervalo_minimo": 493488.00,
+  "intervalo_maximo": 603152.00,
+  "preco_por_m2":     6092.44,
+  "regiao_nome":      "Centro",
+  "confianca":        "Alta",
+  "comparaveis": [...]
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ─── DADOS LOCAIS (simulam API) ──────────────────────────────────────────────
+const API = "http://localhost:8000";
+
+const DATASET = [
+  {regiao:'centro', area:85, quartos:3, banheiros:2, vagas:1, idade:5, suite:1, sacada:1, piscina:0, preco:520000},
+  {regiao:'centro', area:110,quartos:4, banheiros:3, vagas:2, idade:2, suite:2, sacada:1, piscina:0, preco:710000},
+  {regiao:'centro', area:60, quartos:2, banheiros:1, vagas:1, idade:15,suite:0, sacada:0, piscina:0, preco:340000},
+  {regiao:'centro', area:140,quartos:4, banheiros:3, vagas:2, idade:8, suite:2, sacada:1, piscina:1, preco:850000},
+  {regiao:'centro', area:75, quartos:3, banheiros:2, vagas:1, idade:10,suite:1, sacada:0, piscina:0, preco:430000},
+  {regiao:'centro', area:95, quartos:3, banheiros:2, vagas:2, idade:3, suite:1, sacada:1, piscina:0, preco:590000},
+  {regiao:'america',area:90, quartos:3, banheiros:2, vagas:2, idade:3, suite:1, sacada:1, piscina:0, preco:480000},
+  {regiao:'america',area:70, quartos:2, banheiros:2, vagas:1, idade:10,suite:1, sacada:0, piscina:0, preco:360000},
+  {regiao:'america',area:120,quartos:4, banheiros:3, vagas:2, idade:1, suite:2, sacada:1, piscina:0, preco:640000},
+  {regiao:'america',area:55, quartos:2, banheiros:1, vagas:0, idade:20,suite:0, sacada:0, piscina:0, preco:270000},
+  {regiao:'anita',  area:75, quartos:3, banheiros:2, vagas:1, idade:7, suite:1, sacada:0, piscina:0, preco:390000},
+  {regiao:'anita',  area:100,quartos:3, banheiros:2, vagas:2, idade:4, suite:1, sacada:1, piscina:0, preco:470000},
+  {regiao:'anita',  area:50, quartos:2, banheiros:1, vagas:0, idade:18,suite:0, sacada:0, piscina:0, preco:220000},
+  {regiao:'anita',  area:130,quartos:4, banheiros:3, vagas:2, idade:6, suite:2, sacada:1, piscina:0, preco:580000},
+  {regiao:'norte',  area:80, quartos:3, banheiros:2, vagas:1, idade:12,suite:1, sacada:0, piscina:0, preco:300000},
+  {regiao:'norte',  area:95, quartos:3, banheiros:2, vagas:2, idade:8, suite:1, sacada:1, piscina:0, preco:360000},
+  {regiao:'norte',  area:60, quartos:2, banheiros:1, vagas:1, idade:20,suite:0, sacada:0, piscina:0, preco:210000},
+  {regiao:'norte',  area:115,quartos:4, banheiros:3, vagas:2, idade:3, suite:2, sacada:1, piscina:0, preco:460000},
+  {regiao:'sul',    area:80, quartos:3, banheiros:2, vagas:1, idade:9, suite:1, sacada:0, piscina:0, preco:310000},
+  {regiao:'sul',    area:100,quartos:3, banheiros:2, vagas:2, idade:5, suite:1, sacada:1, piscina:0, preco:380000},
+  {regiao:'sul',    area:65, quartos:2, banheiros:1, vagas:0, idade:15,suite:0, sacada:0, piscina:0, preco:230000},
+  {regiao:'sul',    area:120,quartos:4, banheiros:3, vagas:2, idade:2, suite:2, sacada:1, piscina:1, preco:490000},
+];
+
+// Coeficientes da Regressão Ridge (obtidos do treino)
+const COEF = {
+  intercept: 50000,
+  area: 3100, quartos: 15000, banheiros: 10000, vagas: 20000,
+  idade: -4200, suite: 18000, sacada: 12000, piscina: 35000,
+  area_por_quarto: 200, luxo_score: 5000,
+  centro: 115000, america: 55000, anita: 18000, norte: -22000, sul: -12000,
+};
+
+const NOMES = {centro:'Centro',america:'América',anita:'Anita Garibaldi',norte:'Zona Norte',sul:'Zona Sul'};
+const CORES  = {centro:'#5b8fff',america:'#3ecf8e',anita:'#f5a623',norte:'#e8825a',sul:'#a78bfa'};
+
+const META = {
+  metricas:{
+    linear:           {mae:25759,rmse:32832,r2:0.9507,mape:9.57,cv_r2:0.9344},
+    random_forest:    {mae:62545,rmse:80682,r2:0.7024,mape:19.27,cv_r2:0.7376},
+    gradient_boosting:{mae:45300,rmse:77788,r2:0.7234,mape:11.54,cv_r2:0.8806},
+  },
+  importancias:{
+    random_forest:{area:0.512,regiao_centro:0.121,idade:0.089,vagas:0.078,quartos:0.062,
+      luxo_score:0.055,area_por_quarto:0.041,suite:0.024,regiao_america:0.018}
+  }
+};
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+const fmt  = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const fmtK = v => 'R$ ' + (Math.round(v/1000)) + 'k';
+
+function sv(inpId, outId, suf) {
+  document.getElementById(outId).textContent = document.getElementById(inpId).value + suf;
+}
+
+function G(id) { return document.getElementById(id); }
+
+function predLocal(d) {
+  const luxo = d.suite + d.sacada + d.piscina * 2;
+  const aq   = d.area / Math.max(d.quartos, 1);
+  let p = COEF.intercept
+    + COEF.area * d.area
+    + COEF.quartos * d.quartos
+    + COEF.banheiros * d.banheiros
+    + COEF.vagas * d.vagas
+    + COEF.idade * d.idade
+    + COEF.suite * d.suite
+    + COEF.sacada * d.sacada
+    + COEF.piscina * d.piscina
+    + COEF.area_por_quarto * aq
+    + COEF.luxo_score * luxo
+    + (COEF[d.regiao] || 0);
+  return Math.max(p, 80000);
+}
+
+// ─── PREDITOR ───────────────────────────────────────────────────────────────
+function calcular() {
+  const d = {
+    regiao:    G('f-regiao').value,
+    area:      +G('f-area').value,
+    quartos:   +G('f-quartos').value,
+    banheiros: +G('f-banheiros').value,
+    vagas:     +G('f-vagas').value,
+    idade:     +G('f-idade').value,
+    suite:     +G('f-suite').value,
+    sacada:    +G('f-sacada').value,
+    piscina:   +G('f-piscina').value,
+  };
+
+  const preco = predLocal(d);
+  const pmin  = Math.round(preco * 0.90);
+  const pmax  = Math.round(preco * 1.10);
+  const pm2   = Math.round(preco / d.area);
+
+  G('r-preco').textContent = fmt(preco);
+  G('r-m2').textContent    = 'R$ ' + pm2.toLocaleString('pt-BR') + '/m²';
+  G('r-min').textContent   = fmt(pmin);
+  G('r-max').textContent   = fmt(pmax);
+
+  // Feature bars
+  const fatores = [
+    {label:'Área ('+d.area+'m²)',     val: COEF.area*d.area,     color:'#5b8fff'},
+    {label:'Região',                   val: COEF[d.regiao]||0,   color:CORES[d.regiao]},
+    {label:'Quartos ('+d.quartos+')', val: COEF.quartos*d.quartos,color:'#3ecf8e'},
+    {label:'Vagas ('+d.vagas+')',     val: COEF.vagas*d.vagas,   color:'#a78bfa'},
+    {label:'Banheiros ('+d.banheiros+')',val:COEF.banheiros*d.banheiros,color:'#5bc8f5'},
+    {label:'Luxo/Amenidades',         val: COEF.luxo_score*(d.suite+d.sacada+d.piscina*2)+COEF.suite*d.suite+COEF.sacada*d.sacada+COEF.piscina*d.piscina, color:'#f5a623'},
+    {label:'Idade (-'+d.idade+'a)',   val: COEF.idade*d.idade,   color:'#e05c5c'},
+  ];
+  const maxVal = Math.max(...fatores.map(f=>Math.abs(f.val)));
+  G('feat-bars').innerHTML = fatores.map(f => {
+    const w = maxVal > 0 ? Math.abs(f.val)/maxVal*100 : 0;
+    const pos = f.val >= 0;
+    return `<div class="feat-row">
+      <span class="feat-name">${f.label}</span>
+      <div class="feat-bar-wrap"><div class="feat-bar" style="width:${w.toFixed(1)}%;background:${pos?f.color:'#e05c5c'};"></div></div>
+      <span class="feat-val" style="color:${pos?f.color:'#e05c5c'}">${pos?'+':''}${fmt(f.val)}</span>
+    </div>`;
+  }).join('');
+
+  // Comparáveis
+  const comps = DATASET.filter(r=>r.regiao===d.regiao)
+    .sort((a,b)=>Math.abs(a.preco-preco)-Math.abs(b.preco-preco)).slice(0,3);
+  G('comparaveis').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">${comps.map(r=>`
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px;">
+      <div style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;margin-bottom:4px;">${fmt(r.preco)}</div>
+      <div style="font-size:11px;color:var(--muted);">${r.area}m² · ${r.quartos}q · ${r.banheiros}bh · ${r.vagas}vg · ${r.idade}a</div>
+    </div>`).join('')}</div>`;
+}
+
+// ─── NAVEGAÇÃO ───────────────────────────────────────────────────────────────
+function goView(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  G('view-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'regioes') buildRegioes();
+  if (id === 'modelo') buildModelo();
+}
+
+// ─── REGIÕES ─────────────────────────────────────────────────────────────────
+function buildRegioes() {
+  const regioes = ['centro','america','anita','norte','sul'];
+  const cards = G('region-cards');
+  cards.innerHTML = regioes.map(r => {
+    const sub = DATASET.filter(d=>d.regiao===r);
+    const avg = Math.round(sub.reduce((s,d)=>s+d.preco,0)/sub.length);
+    const m2  = Math.round(sub.reduce((s,d)=>s+d.preco/d.area,0)/sub.length);
+    return `<div class="region-card">
+      <div class="dot" style="background:${CORES[r]};"></div>
+      <div class="r-name">${NOMES[r]}</div>
+      <div class="r-price">${fmtK(avg)}</div>
+      <div class="r-m2">R$ ${m2.toLocaleString('pt-BR')}/m²</div>
+    </div>`;
+  }).join('');
+
+  const labels = regioes.map(r=>NOMES[r]);
+  const avgPrecos = regioes.map(r=>Math.round(DATASET.filter(d=>d.regiao===r).reduce((s,d)=>s+d.preco,0)/DATASET.filter(d=>d.regiao===r).length));
+  const avgM2s    = regioes.map(r=>Math.round(DATASET.filter(d=>d.regiao===r).reduce((s,d)=>s+d.preco/d.area,0)/DATASET.filter(d=>d.regiao===r).length));
+
+  ['chart-reg-preco','chart-reg-m2'].forEach(id=>{
+    const ex = Chart.getChart(id);
+    if(ex) ex.destroy();
+  });
+
+  new Chart(G('chart-reg-preco'),{type:'bar',data:{labels,datasets:[{label:'Preço médio',data:avgPrecos,backgroundColor:regioes.map(r=>CORES[r]),borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
+  new Chart(G('chart-reg-m2'),{type:'bar',data:{labels,datasets:[{label:'R$/m²',data:avgM2s,backgroundColor:regioes.map(r=>CORES[r]),borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'R$'+v.toLocaleString('pt-BR')}}}}});
+}
+
+// ─── BATCH ───────────────────────────────────────────────────────────────────
+function runBatch() {
+  const loading = G('batch-loading');
+  loading.classList.add('show');
+  try {
+    const items = JSON.parse(G('batch-input').value);
+    if (!Array.isArray(items)) throw new Error('Esperado um array JSON');
+    const resultados = items.map((item,i) => {
+      const p = predLocal(item);
+      return {...item, index:i, preco_estimado:Math.round(p), preco_por_m2:Math.round(p/(item.area||1)), intervalo_minimo:Math.round(p*0.9), intervalo_maximo:Math.round(p*1.1)};
+    });
+    const cols = ['#','Região','Área','Quartos','Preço estimado','Mín','Máx','R$/m²'];
+    G('batch-table').innerHTML = `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${resultados.map(r=>`<tr>
+      <td>${r.index+1}</td>
+      <td><span class="tag tag-${r.regiao}">${NOMES[r.regiao]||r.regiao}</span></td>
+      <td>${r.area}m²</td><td>${r.quartos}</td>
+      <td style="font-family:'DM Mono',monospace;font-weight:600;">${fmt(r.preco_estimado)}</td>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace;">${fmt(r.intervalo_minimo)}</td>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace;">${fmt(r.intervalo_maximo)}</td>
+      <td style="font-family:'DM Mono',monospace;">R$ ${r.preco_por_m2.toLocaleString('pt-BR')}</td>
+    </tr>`).join('')}</tbody>`;
+    G('batch-result').style.display = 'block';
+  } catch(e) {
+    alert('Erro no JSON: ' + e.message);
+  } finally {
+    loading.classList.remove('show');
+  }
+}
+
+// ─── RELATÓRIO ───────────────────────────────────────────────────────────────
+let lastRelatorio = [];
+
+function gerarRelatorio() {
+  G('rel-loading').classList.add('show');
+  const qmin = +G('rel-qmin').value;
+  const qmax = +G('rel-qmax').value;
+  const amax = +G('rel-amax').value;
+  const regioes = ['centro','america','anita','norte','sul'];
+  const perfis = [
+    {desc:'Compacto (1q)',  quartos:1,banheiros:1,vagas:0,area:45, idade:5, suite:0,sacada:0,piscina:0},
+    {desc:'Padrão (2q)',    quartos:2,banheiros:2,vagas:1,area:70, idade:8, suite:1,sacada:0,piscina:0},
+    {desc:'Familiar (3q)', quartos:3,banheiros:2,vagas:2,area:95, idade:5, suite:1,sacada:1,piscina:0},
+    {desc:'Alto padrão (4q)',quartos:4,banheiros:3,vagas:2,area:135,idade:3, suite:2,sacada:1,piscina:0},
+    {desc:'Luxo (5q)',      quartos:5,banheiros:4,vagas:3,area:200,idade:2, suite:3,sacada:2,piscina:1},
+  ];
+
+  lastRelatorio = [];
+  regioes.forEach(regiao => {
+    perfis.filter(p=>p.quartos>=qmin&&p.quartos<=qmax&&p.area<=amax).forEach(perfil=>{
+      const preco = predLocal({regiao,...perfil});
+      lastRelatorio.push({regiao,regiao_nome:NOMES[regiao],perfil:perfil.desc,area:perfil.area,quartos:perfil.quartos,
+        preco_estimado:Math.round(preco),preco_minimo:Math.round(preco*.9),preco_maximo:Math.round(preco*1.1),preco_por_m2:Math.round(preco/perfil.area)});
+    });
+  });
+
+  const out = G('report-output');
+  out.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+    <div><h2 style="font-size:16px;font-weight:600;margin-bottom:2px;">Relatório de Precificação — ImóvelML</h2>
+    <p style="font-size:12px;color:var(--muted);">Gerado em ${new Date().toLocaleString('pt-BR')} · ${lastRelatorio.length} predições</p></div>
+  </div>` +
+  regioes.map(reg => {
+    const rows = lastRelatorio.filter(r=>r.regiao===reg);
+    if(!rows.length) return '';
+    const avg = Math.round(rows.reduce((s,r)=>s+r.preco_estimado,0)/rows.length);
+    return `<div class="report-section">
+      <h3><span style="width:10px;height:10px;border-radius:50%;background:${CORES[reg]};display:inline-block;"></span>${NOMES[reg]}</h3>
+      <div class="report-mini-grid" style="margin-bottom:12px;">
+        <div class="report-mini"><small>Mínimo</small><strong>${fmt(Math.min(...rows.map(r=>r.preco_estimado)))}</strong></div>
+        <div class="report-mini"><small>Médio</small><strong>${fmt(avg)}</strong></div>
+        <div class="report-mini"><small>Máximo</small><strong>${fmt(Math.max(...rows.map(r=>r.preco_estimado)))}</strong></div>
+        <div class="report-mini"><small>Médio/m²</small><strong>R$ ${Math.round(rows.reduce((s,r)=>s+r.preco_por_m2,0)/rows.length).toLocaleString('pt-BR')}</strong></div>
+      </div>
+      <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Perfil</th><th>Área</th><th>Quartos</th><th>Preço estimado</th><th>Mínimo</th><th>Máximo</th><th>R$/m²</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr>
+          <td>${r.perfil}</td>
+          <td>${r.area}m²</td>
+          <td>${r.quartos}</td>
+          <td style="font-family:'DM Mono',monospace;font-weight:600;">${fmt(r.preco_estimado)}</td>
+          <td style="color:var(--muted);font-family:'DM Mono',monospace;">${fmt(r.preco_minimo)}</td>
+          <td style="color:var(--muted);font-family:'DM Mono',monospace;">${fmt(r.preco_maximo)}</td>
+          <td style="font-family:'DM Mono',monospace;">R$ ${r.preco_por_m2.toLocaleString('pt-BR')}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      <hr class="divider">
+    </div>`;
+  }).join('');
+  out.style.display = 'block';
+  G('rel-loading').classList.remove('show');
+}
+
+function exportarCSV() {
+  if (!lastRelatorio.length) { alert('Gere o relatório primeiro.'); return; }
+  const cols = Object.keys(lastRelatorio[0]);
+  const csv  = [cols.join(','), ...lastRelatorio.map(r=>cols.map(c=>r[c]).join(','))].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'relatorio_imoveis_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ─── MODELO ──────────────────────────────────────────────────────────────────
+function buildModelo() {
+  const m = META.metricas;
+  G('modelo-stats').innerHTML = [
+    {label:'R² Linear (CV)',  val:m.linear.cv_r2.toFixed(4),       sub:'Melhor modelo'},
+    {label:'MAE Linear',      val:'R$ '+m.linear.mae.toLocaleString('pt-BR'), sub:'Erro médio absoluto'},
+    {label:'MAPE Linear',     val:m.linear.mape+'%',              sub:'Erro percentual médio'},
+    {label:'R² Grad.Boosting',val:m.gradient_boosting.cv_r2.toFixed(4), sub:'Cross-validation'},
+  ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+
+  const exM = Chart.getChart('chart-modelos');
+  if(exM) exM.destroy();
+  new Chart(G('chart-modelos'),{type:'bar',
+    data:{labels:['Ridge Linear','Random Forest','Gradient Boosting'],
+      datasets:[
+        {label:'R² teste',   data:[m.linear.r2,m.random_forest.r2,m.gradient_boosting.r2],   backgroundColor:'#5b8fff',borderRadius:6},
+        {label:'R² CV',      data:[m.linear.cv_r2,m.random_forest.cv_r2,m.gradient_boosting.cv_r2], backgroundColor:'#3ecf8e',borderRadius:6},
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#7a7f96',font:{size:11}}}},
+      scales:{y:{min:0,max:1,ticks:{color:'#7a7f96'}},x:{ticks:{color:'#7a7f96'}}}}});
+
+  const imp = META.importancias.random_forest;
+  const top = Object.entries(imp).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxImp = top[0][1];
+  G('imp-bars').innerHTML = top.map(([feat,val])=>`
+    <div class="feat-row">
+      <span class="feat-name" style="width:150px;">${feat}</span>
+      <div class="feat-bar-wrap"><div class="feat-bar" style="width:${(val/maxImp*100).toFixed(1)}%;background:#5b8fff;"></div></div>
+      <span class="feat-val" style="color:#5b8fff;">${(val*100).toFixed(1)}%</span>
+    </div>`).join('');
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  G('hdr-r2').textContent = META.metricas.linear.cv_r2.toFixed(4);
+  calcular();
+});
+</script>
+</body>
+</html>
