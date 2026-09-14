@@ -32,14 +32,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 # ─── PATHS ──────────────────────────────────────────────────────────────────────
-BASE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
-DATA_PATH  = os.path.join(BASE_DIR, "data", "imoveis_joinville.csv")
+DATA_PATH  = os.path.join(BASE_DIR, "dados_sp_ref.csv")
 
 # ─── FASTAPI ─────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="ImóvelML API",
-    description="API de precificação de imóveis com Machine Learning — Joinville, SC",
+    description="API de precificação de imóveis com Machine Learning — São Paulo, SP",
     version="1.0.0",
 )
 
@@ -56,16 +56,44 @@ modelo      = None
 metadata    = None
 df_dados    = None
 
-REGIOES_VALIDAS = ["centro", "america", "anita", "norte", "sul"]
+REGIOES_VALIDAS = ["centro", "america", "anita", "norte", "sul", "leste", "oeste"]
 
 NOMES_REGIOES = {
     "centro":  "Centro",
-    "america": "América",
-    "anita":   "Anita Garibaldi",
+    "america": "Zona Leste",
+    "anita":   "Zona Oeste",
     "norte":   "Zona Norte",
     "sul":     "Zona Sul",
+    "leste":   "Zona Leste",
+    "oeste":   "Zona Oeste",
 }
 
+ALIASES_REGIAO = {
+    "leste": "america",
+    "zona leste": "america",
+    "oeste": "anita",
+    "zona oeste": "anita",
+    "zona norte": "norte",
+    "zona sul": "sul",
+}
+
+def bonus_por_rua(rua: Optional[str], regiao: str) -> float:
+    if not rua:
+        return 0.0
+
+    texto = rua.strip().lower()
+    if not texto:
+        return 0.0
+
+    if any(token in texto for token in ["paulista", "faria lima", "cerqueira", "jardins", "pinheiros", "morumbi", "itasim", "brooklin"]):
+        return 180000.0
+    if any(token in texto for token in ["mooca", "tatuape", "penha", "sao mateus", "santo amaro", "gomes cardim"]):
+        return -40000.0
+    if any(token in texto for token in ["sé", "se", "centro", "republica", "liberdade", "cambuci", "jabaquara"]):
+        return 50000.0
+    if any(token in texto for token in ["perdizes", "saude", "vila madalena", "bela vista", "santa cecilia"]):
+        return 70000.0
+    return 0.0
 
 @app.on_event("startup")
 async def carregar_recursos():
@@ -90,6 +118,7 @@ async def carregar_recursos():
 
 class ImovelInput(BaseModel):
     regiao:     str   = Field(..., description="Região do imóvel", example="centro")
+    rua:        Optional[str] = Field(None, description="Nome da rua ou avenida específica", example="Avenida Paulista")
     area:       float = Field(..., ge=20, le=1000, description="Área em m²", example=85)
     quartos:    int   = Field(..., ge=1, le=10,   description="Número de quartos", example=3)
     banheiros:  int   = Field(..., ge=1, le=10,   description="Número de banheiros", example=2)
@@ -99,11 +128,15 @@ class ImovelInput(BaseModel):
     sacada:     int   = Field(0,  ge=0, le=3,    description="Sacadas/varandas")
     piscina:    int   = Field(0,  ge=0, le=1,    description="Piscina (0=não, 1=sim)")
 
-    @validator("regiao")
+    @validator("regiao", pre=True)
     def validar_regiao(cls, v):
-        if v.lower() not in REGIOES_VALIDAS:
+        if not isinstance(v, str):
+            raise ValueError("Região inválida.")
+        value = v.strip().lower()
+        value = ALIASES_REGIAO.get(value, value)
+        if value not in REGIOES_VALIDAS:
             raise ValueError(f"Região inválida. Use: {REGIOES_VALIDAS}")
-        return v.lower()
+        return value
 
 
 class ImovelOutput(BaseModel):
@@ -184,7 +217,7 @@ def predict(imovel: ImovelInput):
         raise HTTPException(503, "Modelo não carregado. Execute train_model.py.")
 
     X = construir_features(imovel)
-    preco = float(modelo.predict(X)[0])
+    preco = float(modelo.predict(X)[0]) + bonus_por_rua(imovel.rua, imovel.regiao)
 
     # Intervalo de confiança: ±10% (em produção: use quantile regression)
     margem = preco * 0.10
@@ -216,7 +249,7 @@ def predict_batch(imoveis: List[ImovelInput]):
     resultados = []
     for i, imovel in enumerate(imoveis):
         X = construir_features(imovel)
-        preco = float(modelo.predict(X)[0])
+        preco = float(modelo.predict(X)[0]) + bonus_por_rua(imovel.rua, imovel.regiao)
         margem = preco * 0.10
         resultados.append({
             "index": i,

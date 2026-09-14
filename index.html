@@ -247,7 +247,7 @@
       <div class="icon">🏠</div>
       <div>
         <span>ImóvelML</span>
-        <small>Joinville, SC</small>
+        <small>São Paulo, SP</small>
       </div>
     </div>
     <nav class="nav-section">
@@ -285,10 +285,31 @@
             <label>Região</label>
             <select id="f-regiao" onchange="calcular()">
               <option value="centro">Centro</option>
-              <option value="america">América</option>
-              <option value="anita">Anita Garibaldi</option>
+              <option value="america">Zona Leste</option>
+              <option value="anita">Zona Oeste</option>
               <option value="norte">Zona Norte</option>
               <option value="sul">Zona Sul</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Rua / Avenida</label>
+            <select id="f-rua" onchange="calcular()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;outline:none;">
+              <option value="Avenida Paulista">Avenida Paulista</option>
+              <option value="Rua da Consolação">Rua da Consolação</option>
+              <option value="Avenida Faria Lima">Avenida Faria Lima</option>
+              <option value="Rua Oscar Freire">Rua Oscar Freire</option>
+              <option value="Avenida Brigadeiro Faria Lima">Avenida Brigadeiro Faria Lima</option>
+              <option value="Avenida Brasil">Avenida Brasil</option>
+              <option value="Rua Augusta">Rua Augusta</option>
+              <option value="Rua Vergueiro">Rua Vergueiro</option>
+              <option value="Avenida São João">Avenida São João</option>
+              <option value="Avenida Rebouças">Avenida Rebouças</option>
+              <option value="Mooca">Mooca</option>
+              <option value="Pinheiros">Pinheiros</option>
+              <option value="Vila Madalena">Vila Madalena</option>
+              <option value="Centro">Centro</option>
+              <option value="Jardins">Jardins</option>
             </select>
           </div>
 
@@ -538,44 +559,44 @@
 </div>
 
 <script>
-// ─── DADOS LOCAIS (simulam API) ──────────────────────────────────────────────
-const API = "http://localhost:8000";
+// ─── DADOS DE REFERÊNCIA — SÃO PAULO ────────────────────────────────────────
+const API = "http://localhost:8001";
 
 const DATASET = [
-  {regiao:'centro', area:85, quartos:3, banheiros:2, vagas:1, idade:5, suite:1, sacada:1, piscina:0, preco:520000},
-  {regiao:'centro', area:110,quartos:4, banheiros:3, vagas:2, idade:2, suite:2, sacada:1, piscina:0, preco:710000},
-  {regiao:'centro', area:60, quartos:2, banheiros:1, vagas:1, idade:15,suite:0, sacada:0, piscina:0, preco:340000},
-  {regiao:'centro', area:140,quartos:4, banheiros:3, vagas:2, idade:8, suite:2, sacada:1, piscina:1, preco:850000},
-  {regiao:'centro', area:75, quartos:3, banheiros:2, vagas:1, idade:10,suite:1, sacada:0, piscina:0, preco:430000},
-  {regiao:'centro', area:95, quartos:3, banheiros:2, vagas:2, idade:3, suite:1, sacada:1, piscina:0, preco:590000},
-  {regiao:'america',area:90, quartos:3, banheiros:2, vagas:2, idade:3, suite:1, sacada:1, piscina:0, preco:480000},
-  {regiao:'america',area:70, quartos:2, banheiros:2, vagas:1, idade:10,suite:1, sacada:0, piscina:0, preco:360000},
-  {regiao:'america',area:120,quartos:4, banheiros:3, vagas:2, idade:1, suite:2, sacada:1, piscina:0, preco:640000},
-  {regiao:'america',area:55, quartos:2, banheiros:1, vagas:0, idade:20,suite:0, sacada:0, piscina:0, preco:270000},
-  {regiao:'anita',  area:75, quartos:3, banheiros:2, vagas:1, idade:7, suite:1, sacada:0, piscina:0, preco:390000},
-  {regiao:'anita',  area:100,quartos:3, banheiros:2, vagas:2, idade:4, suite:1, sacada:1, piscina:0, preco:470000},
-  {regiao:'anita',  area:50, quartos:2, banheiros:1, vagas:0, idade:18,suite:0, sacada:0, piscina:0, preco:220000},
-  {regiao:'anita',  area:130,quartos:4, banheiros:3, vagas:2, idade:6, suite:2, sacada:1, piscina:0, preco:580000},
-  {regiao:'norte',  area:80, quartos:3, banheiros:2, vagas:1, idade:12,suite:1, sacada:0, piscina:0, preco:300000},
-  {regiao:'norte',  area:95, quartos:3, banheiros:2, vagas:2, idade:8, suite:1, sacada:1, piscina:0, preco:360000},
-  {regiao:'norte',  area:60, quartos:2, banheiros:1, vagas:1, idade:20,suite:0, sacada:0, piscina:0, preco:210000},
-  {regiao:'norte',  area:115,quartos:4, banheiros:3, vagas:2, idade:3, suite:2, sacada:1, piscina:0, preco:460000},
-  {regiao:'sul',    area:80, quartos:3, banheiros:2, vagas:1, idade:9, suite:1, sacada:0, piscina:0, preco:310000},
-  {regiao:'sul',    area:100,quartos:3, banheiros:2, vagas:2, idade:5, suite:1, sacada:1, piscina:0, preco:380000},
-  {regiao:'sul',    area:65, quartos:2, banheiros:1, vagas:0, idade:15,suite:0, sacada:0, piscina:0, preco:230000},
-  {regiao:'sul',    area:120,quartos:4, banheiros:3, vagas:2, idade:2, suite:2, sacada:1, piscina:1, preco:490000},
+  {regiao:'centro', area:85, quartos:3, banheiros:2, vagas:1, idade:5, suite:1, sacada:1, piscina:0, preco:880000},
+  {regiao:'centro', area:110,quartos:4, banheiros:3, vagas:2, idade:2, suite:2, sacada:1, piscina:0, preco:1450000},
+  {regiao:'centro', area:60, quartos:2, banheiros:1, vagas:1, idade:15,suite:0, sacada:0, piscina:0, preco:620000},
+  {regiao:'centro', area:140,quartos:4, banheiros:3, vagas:2, idade:8, suite:2, sacada:1, piscina:1, preco:2150000},
+  {regiao:'centro', area:75, quartos:3, banheiros:2, vagas:1, idade:10,suite:1, sacada:0, piscina:0, preco:760000},
+  {regiao:'centro', area:95, quartos:3, banheiros:2, vagas:2, idade:3, suite:1, sacada:1, piscina:0, preco:1180000},
+  {regiao:'america',area:90, quartos:3, banheiros:2, vagas:2, idade:3, suite:1, sacada:1, piscina:0, preco:960000},
+  {regiao:'america',area:70, quartos:2, banheiros:2, vagas:1, idade:10,suite:1, sacada:0, piscina:0, preco:680000},
+  {regiao:'america',area:120,quartos:4, banheiros:3, vagas:2, idade:1, suite:2, sacada:1, piscina:0, preco:1650000},
+  {regiao:'america',area:55, quartos:2, banheiros:1, vagas:0, idade:20,suite:0, sacada:0, piscina:0, preco:420000},
+  {regiao:'anita',  area:75, quartos:3, banheiros:2, vagas:1, idade:7, suite:1, sacada:0, piscina:0, preco:720000},
+  {regiao:'anita',  area:100,quartos:3, banheiros:2, vagas:2, idade:4, suite:1, sacada:1, piscina:0, preco:980000},
+  {regiao:'anita',  area:50, quartos:2, banheiros:1, vagas:0, idade:18,suite:0, sacada:0, piscina:0, preco:390000},
+  {regiao:'anita',  area:130,quartos:4, banheiros:3, vagas:2, idade:6, suite:2, sacada:1, piscina:0, preco:1520000},
+  {regiao:'norte',  area:80, quartos:3, banheiros:2, vagas:1, idade:12,suite:1, sacada:0, piscina:0, preco:690000},
+  {regiao:'norte',  area:95, quartos:3, banheiros:2, vagas:2, idade:8, suite:1, sacada:1, piscina:0, preco:860000},
+  {regiao:'norte',  area:60, quartos:2, banheiros:1, vagas:1, idade:20,suite:0, sacada:0, piscina:0, preco:420000},
+  {regiao:'norte',  area:115,quartos:4, banheiros:3, vagas:2, idade:3, suite:2, sacada:1, piscina:0, preco:1180000},
+  {regiao:'sul',    area:80, quartos:3, banheiros:2, vagas:1, idade:9, suite:1, sacada:0, piscina:0, preco:925000},
+  {regiao:'sul',    area:100,quartos:3, banheiros:2, vagas:2, idade:5, suite:1, sacada:1, piscina:0, preco:1360000},
+  {regiao:'sul',    area:65, quartos:2, banheiros:1, vagas:0, idade:15,suite:0, sacada:0, piscina:0, preco:510000},
+  {regiao:'sul',    area:120,quartos:4, banheiros:3, vagas:2, idade:2, suite:2, sacada:1, piscina:1, preco:1880000},
 ];
 
-// Coeficientes da Regressão Ridge (obtidos do treino)
+// Coeficientes da Regressão Ridge — referência São Paulo
 const COEF = {
-  intercept: 50000,
-  area: 3100, quartos: 15000, banheiros: 10000, vagas: 20000,
-  idade: -4200, suite: 18000, sacada: 12000, piscina: 35000,
-  area_por_quarto: 200, luxo_score: 5000,
-  centro: 115000, america: 55000, anita: 18000, norte: -22000, sul: -12000,
+  intercept: 180000,
+  area: 4200, quartos: 18000, banheiros: 14000, vagas: 24000,
+  idade: -4500, suite: 22000, sacada: 16000, piscina: 42000,
+  area_por_quarto: 260, luxo_score: 6000,
+  centro: 260000, america: 180000, anita: 90000, norte: -50000, sul: 120000,
 };
 
-const NOMES = {centro:'Centro',america:'América',anita:'Anita Garibaldi',norte:'Zona Norte',sul:'Zona Sul'};
+const NOMES = {centro:'Centro',america:'Zona Leste',anita:'Zona Oeste',norte:'Zona Norte',sul:'Zona Sul'};
 const CORES  = {centro:'#5b8fff',america:'#3ecf8e',anita:'#f5a623',norte:'#e8825a',sul:'#a78bfa'};
 
 const META = {
@@ -600,6 +621,17 @@ function sv(inpId, outId, suf) {
 
 function G(id) { return document.getElementById(id); }
 
+function bonusRua(d) {
+  const texto = (d.rua || '').trim().toLowerCase();
+  if (!texto) return 0;
+
+  if (['paulista','faria lima','cerqueira','jardins','pinheiros','morumbi','itasim','brooklin'].some(tok => texto.includes(tok))) return 180000;
+  if (['mooca','tatuape','penha','sao mateus','gomes cardim','santo amaro'].some(tok => texto.includes(tok))) return -40000;
+  if (['sé','se','centro','republica','liberdade','cambuci','jabaquara'].some(tok => texto.includes(tok))) return 50000;
+  if (['perdizes','saude','vila madalena','bela vista','santa cecilia'].some(tok => texto.includes(tok))) return 70000;
+  return 0;
+}
+
 function predLocal(d) {
   const luxo = d.suite + d.sacada + d.piscina * 2;
   const aq   = d.area / Math.max(d.quartos, 1);
@@ -614,7 +646,8 @@ function predLocal(d) {
     + COEF.piscina * d.piscina
     + COEF.area_por_quarto * aq
     + COEF.luxo_score * luxo
-    + (COEF[d.regiao] || 0);
+    + (COEF[d.regiao] || 0)
+    + bonusRua(d);
   return Math.max(p, 80000);
 }
 
@@ -622,6 +655,7 @@ function predLocal(d) {
 function calcular() {
   const d = {
     regiao:    G('f-regiao').value,
+    rua:       G('f-rua').value,
     area:      +G('f-area').value,
     quartos:   +G('f-quartos').value,
     banheiros: +G('f-banheiros').value,
