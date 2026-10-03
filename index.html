@@ -253,6 +253,7 @@
     <nav class="nav-section">
       <div class="nav-label">Módulos</div>
       <button class="nav-item active" onclick="goView('predictor', this)"><span class="dot"></span>Preditor de Preço</button>
+      <button class="nav-item" onclick="goView('iup', this)"><span class="dot"></span>Padrão Construtivo (IUP)</button>
       <button class="nav-item" onclick="goView('regioes', this)"><span class="dot"></span>Análise por Região</button>
       <button class="nav-item" onclick="goView('batch', this)"><span class="dot"></span>Predição em Lote</button>
       <button class="nav-item" onclick="goView('relatorio', this)"><span class="dot"></span>Relatório</button>
@@ -412,6 +413,29 @@
     <!-- ══════════════════════════════════════════
          VIEW: REGIÕES
     ══════════════════════════════════════════ -->
+    <div id="view-iup" class="view">
+      <div class="topbar"><div><h1>Padrão Construtivo (IUP)</h1><p>IBAPE/SP 2019 — Índice de Unidades Padronizadas, depreciação Ross-Heidecke</p></div><span class="badge" style="background:rgba(245,166,35,.15);color:var(--warn);border-color:rgba(245,166,35,.3)">Pendente de validação</span></div>
+      <div class="form-grid">
+        <div class="card">
+          <div class="card-title">Entrada</div>
+          <div class="form-group"><label>Tipologia / Padrão (Tabela 1)</label><select id="iup-padrao" onchange="calcIUP()"></select></div>
+          <div class="form-group"><label>Idade real (anos)</label><input type="number" id="iup-real" value="10" min="0" max="120" oninput="calcIUP()"></div>
+          <div class="form-group"><label>Idade estimada Ie (obsoletismo) — não pode exceder a real</label><input type="number" id="iup-ie" value="10" min="0" max="120" oninput="calcIUP()"></div>
+          <div class="form-group"><label>Estado de conservação Ec (Quadro 1)</label><select id="iup-ec" onchange="calcIUP()"></select></div>
+          <p style="font-size:12px;color:var(--muted);">Fórmulas: K = (1 − Ec) × {1 − [Ie/Ir + (Ie/Ir)²]/2} · Foc = R + K × (1 − R)</p>
+        </div>
+        <div>
+          <div class="result-box"><div class="result-label">Fator de obsoletismo e conservação (Foc)</div><div class="result-price" id="iup-foc">—</div><div class="result-m2" id="iup-k">—</div>
+            <div class="result-range"><div class="result-range-item"><small>IUP mín.</small><strong id="iup-min">—</strong></div><div class="result-range-item"><small>IUP médio</small><strong id="iup-med">—</strong></div><div class="result-range-item"><small>IUP máx.</small><strong id="iup-max">—</strong></div></div></div>
+          <div class="card" id="iup-info" style="margin-bottom:1rem;font-size:13px;color:var(--muted);"></div>
+          <div class="card"><div class="card-title">Uso permitido (itens 3.1 e 3.3.4)</div><p style="font-size:12.5px;color:var(--muted);">O IUP é número puro, usado como variável proxy no Método Comparativo, sobre a parcela de capital da benfeitoria. Não serve ao Método Evolutivo nem como preço direto.</p></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1rem;"><div class="card-title">Tabela de referência (Tabela 1 + Quadro A6)</div><div style="overflow-x:auto;"><table id="iup-tab"></table></div></div>
+      <div class="card" style="margin-top:1rem;"><div class="card-title">Tabela 2 — Coeficiente de Ross-Heidecke K (linha = Ie/Ir; destaque = Ie/Ir da simulação)</div><div style="overflow-x:auto;max-height:420px;overflow-y:auto;"><table id="iup-k-tab"></table></div></div>
+      <div class="card" style="margin-top:1rem;"><div class="card-title">Quadro 1 — Estado de conservação (Ec)</div><div style="overflow-x:auto;"><table id="iup-ec-tab"></table></div></div>
+    </div>
+
     <div id="view-regioes" class="view">
       <div class="topbar"><div><h1>Análise por Região</h1><p>Estatísticas do dataset de treinamento</p></div></div>
       <div class="region-grid" id="region-cards"></div>
@@ -883,9 +907,74 @@ function buildModelo() {
     </div>`).join('');
 }
 
+// ─── IUP / ROSS-HEIDECKE (IBAPE/SP 2019) ─────────────────────────────────────
+// [classe, padrão, elevador, Ir, R, mín, médio, máx]  (máx null = não definido no estudo)
+const IUP = [
+ ['Apartamento','1.1.1 Econômico','',60,.2,2.473,2.748,3.023],
+ ['Apartamento','1.1.2 Simples','Sem elevador',60,.2,3.180,3.533,3.827],
+ ['Apartamento','1.1.2 Simples','Com elevador',60,.2,3.562,3.958,4.354],
+ ['Apartamento','1.1.3 Médio','Sem elevador',60,.2,3.828,4.218,4.640],
+ ['Apartamento','1.1.3 Médio','Com elevador',60,.2,4.568,5.075,5.583],
+ ['Apartamento','1.1.4 Superior','Sem elevador',60,.2,5.377,5.974,6.572],
+ ['Apartamento','1.1.4 Superior','Com elevador',60,.2,6.144,6.827,7.089],
+ ['Apartamento','1.1.5 Fino','',50,.2,7.090,7.410,7.983],
+ ['Apartamento','1.1.6 Luxo','',50,.2,7.984,8.683,9.551],
+ ['Escritório','2.1.1 Econômico','',70,.2,2.081,2.313,2.544],
+ ['Escritório','2.1.2 Simples','Sem elevador',70,.2,3.378,3.753,4.013],
+ ['Escritório','2.1.2 Simples','Com elevador',70,.2,3.742,4.158,4.573],
+ ['Escritório','2.1.3 Médio','Sem elevador',60,.2,4.014,4.330,4.763],
+ ['Escritório','2.1.3 Médio','Com elevador',60,.2,4.745,5.273,5.767],
+ ['Escritório','2.1.4 Superior','Sem elevador',60,.2,5.206,5.784,6.363],
+ ['Escritório','2.1.4 Superior','Com elevador',60,.2,5.768,6.371,7.072],
+ ['Escritório','2.1.5 Fino','',50,.2,7.073,7.929,8.722],
+ ['Escritório','2.1.6 Luxo','',50,.2,9.935,10.376,null],
+];
+const EC = [['A','Nova',0],['B','Entre nova e regular',.0032],['C','Regular',.0252],['D','Entre regular e reparos simples',.0809],
+ ['E','Reparos simples',.1810],['F','Reparos simples a importantes',.3320],['G','Reparos importantes',.5260],['H','Reparos importantes a sem valor',.7520],['I','Sem valor (ruína)',1]];
+const iupLabel = r => `${r[0]} · ${r[1]}${r[2]?' · '+r[2]:''}`;
+const f3 = v => v==null ? '—' : v.toFixed(3).replace('.',',');
+
+function rossHeidecke(Ie, Ir, Ec) {
+  const x = Math.min(Ie/Ir, 1);
+  return (1 - Ec) * (1 - (x + x*x) / 2);          // Equação 2
+}
+function foc(K, R) { return R + K * (1 - R); }    // Equação 1
+
+function calcIUP() {
+  const r = IUP[+G('iup-padrao').value], ec = EC[+G('iup-ec').value];
+  const real = +G('iup-real').value, ie = Math.min(+G('iup-ie').value, real);
+  if (+G('iup-ie').value > real) G('iup-ie').value = real;   // item 3.2.6
+  const K = rossHeidecke(ie, r[3], ec[2]), F = foc(K, r[4]);
+  G('iup-foc').textContent = F.toFixed(4).replace('.',',');
+  G('iup-k').textContent = `K = ${K.toFixed(4).replace('.',',')}  ·  Ie/Ir = ${(Math.min(ie/r[3],1)*100).toFixed(1)}%`;
+  G('iup-min').textContent = f3(r[5]); G('iup-med').textContent = f3(r[6]); G('iup-max').textContent = f3(r[7]);
+  hlK(ie/r[3]);
+  G('iup-info').innerHTML = `<strong style="color:var(--text)">${iupLabel(r)}</strong><br>Vida referencial Ir = ${r[3]} anos · Valor residual R = ${(r[4]*100)}%<br>Estado ${ec[0]} — ${ec[1]} (Ec = ${(ec[2]*100).toFixed(2).replace('.',',')}%)`;
+}
+
+function hlK(x) {
+  const n = Math.max(2, Math.min(100, Math.round(x*50)*2));
+  document.querySelectorAll('#iup-k-tab tbody tr').forEach(tr => tr.style.background = (+tr.dataset.x === n) ? 'rgba(91,143,255,.18)' : '');
+}
+
+function initIUP() {
+  G('iup-padrao').innerHTML = IUP.map((r,i)=>`<option value="${i}">${iupLabel(r)}</option>`).join('');
+  G('iup-ec').innerHTML = EC.map((e,i)=>`<option value="${i}">${e[0]} — ${e[1]} (${(e[2]*100).toFixed(2).replace('.',',')}%)</option>`).join('');
+  G('iup-tab').innerHTML = '<thead><tr><th>Classe</th><th>Padrão</th><th>Elevador</th><th>Ir</th><th>R</th><th>Mín</th><th>Médio</th><th>Máx</th></tr></thead><tbody>' +
+    IUP.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]||'—'}</td><td>${r[3]}</td><td>${r[4]*100}%</td><td>${f3(r[5])}</td><td><strong>${f3(r[6])}</strong></td><td>${f3(r[7])}</td></tr>`).join('') + '</tbody>';
+
+  const pc = i => (i*100).toFixed(2).replace('.',',')+'%';
+  G('iup-k-tab').innerHTML = '<thead><tr><th>Ie/Ir</th>'+EC.slice(0,8).map(e=>`<th>${e[0]}<br>${pc(e[2])}</th>`).join('')+'</tr></thead><tbody>' +
+    Array.from({length:50},(_,i)=>(i+1)*2).map(x=>`<tr data-x="${x}"><td><strong>${x}%</strong></td>`+EC.slice(0,8).map(e=>`<td style="font-family:'DM Mono',monospace;">${rossHeidecke(x/100,1,e[2]).toFixed(4).replace('.',',')}</td>`).join('')+'</tr>').join('') + '</tbody>';
+  const desc = {A:'Nova ou reformada há menos de 2 anos; só desgaste natural da pintura externa.',B:'Nova/reformada há menos de 2 anos; precisa de demão leve de pintura.',C:'Seminova ou reforma entre 2 e 5 anos; reparos de fissuras superficiais e/ou pintura.',D:'Seminova; reparo de fissuras e trincas localizadas e pintura interna e externa.',E:'Pintura interna/externa após reparos de fissuras generalizadas, sem recuperar a estrutura; eventual revisão hidráulica/elétrica.',F:'Reparos com recuperação localizada da estrutura; revisão das instalações; eventual troca de revestimentos de um ou outro cômodo; revisão da impermeabilização/telhas.',G:'Recuperação de grande parte da estrutura; troca de peças aparentes das instalações; troca de revestimentos na maioria dos cômodos; reparos importantes no telhado.',H:'Recuperação da estrutura; troca das instalações, dos revestimentos e da impermeabilização/telhado.',I:'Edificação em estado de ruína.'};
+  G('iup-ec-tab').innerHTML = '<thead><tr><th>Ref.</th><th>Estado</th><th>Depreciação</th><th>Características (resumo)</th></tr></thead><tbody>' + EC.map(e=>`<tr><td><strong>${e[0]}</strong></td><td>${e[1]}</td><td>${pc(e[2])}</td><td style="color:var(--muted);">${desc[e[0]]}</td></tr>`).join('') + '</tbody>';
+  calcIUP();
+}
+
 // ─── INIT ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   G('hdr-r2').textContent = META.metricas.linear.cv_r2.toFixed(4);
+  initIUP();
   calcular();
 });
 </script>
