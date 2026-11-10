@@ -1,0 +1,266 @@
+{
+  "dataset_id": "caixa_sp_appraisal_validation_candidate",
+  "input_file": "caixa_sp_validacao.csv",
+  "status": "candidate_for_expert_review_not_approved_for_operational_use",
+  "record_count": 480,
+  "candidate_rows_for_spatial_validation": 478,
+  "validation_rows_excluded_from_spatial_candidate": 2,
+  "target": {
+    "column": "valor_avaliacao_brl",
+    "definition_in_source": "avaliacao_caixa_imovel_retomado",
+    "unit": "BRL",
+    "target_summary": {
+      "valid_positive_targets": 480,
+      "min_brl": 136179.75,
+      "median_brl": 233836.5,
+      "max_brl": 3020000.0
+    }
+  },
+  "quality": {
+    "counts": {
+      "area_type:privativa": 480,
+      "bedrooms_missing_or_invalid": 74,
+      "bedrooms_present": 406,
+      "parking_spaces_missing_or_invalid": 373,
+      "parking_spaces_present": 107,
+      "property_type:apartamento": 479,
+      "property_type:sala": 1,
+      "source:caixa_lista_imoveis_oficial": 480,
+      "target_nature:avaliacao_caixa_imovel_retomado": 480,
+      "valid_collection_date": 480
+    },
+    "invalid_rows_by_reason": {
+      "area_missing_or_out_of_range": 1,
+      "unsupported_property_type": 1
+    },
+    "unique_property_ids": 480,
+    "duplicate_property_id_groups": 0,
+    "appraisal_date_coverage_percent": 0.0,
+    "target_per_m2_matches_target_divided_by_area_rows": 480,
+    "target_per_m2_checked_rows": 480,
+    "bedrooms_coverage_percent": 84.58,
+    "parking_spaces_coverage_percent": 22.29,
+    "collection_date_distinct_values": 1,
+    "appraisal_date_distinct_values": 0
+  },
+  "spatial_baseline_validation": {
+    "method": "5-fold spatial cross-validation grouped by neighborhood; each neighborhood appears in test in one fold only.",
+    "rows_evaluated": 478,
+    "neighborhoods_evaluated": 186,
+    "features_used": [
+      "area_ref_m2 (private area)"
+    ],
+    "excluded_as_predictors": [
+      "valor_avaliacao_brl_m2 (derived from target and area)",
+      "preco_venda_brl (auction/listing price, not appraisal target)",
+      "desconto_pct (may be derived from appraisal and price)",
+      "n_do_imovel",
+      "endereco",
+      "link_de_acesso",
+      "sql_iptu"
+    ],
+    "estimators": {
+      "training_citywide_median": {
+        "description": "Mediana municipal do valor de avaliação no conjunto de treino.",
+        "out_of_fold_metrics": {
+          "mae_brl": 90699.93,
+          "rmse_brl": 290393.51,
+          "median_absolute_percentage_error_percent": 12.9603,
+          "p90_absolute_percentage_error_percent": 39.9367,
+          "wape_percent": 30.6025,
+          "smape_percent": 20.9652,
+          "r2": -0.051152
+        }
+      },
+      "training_median_per_m2_times_private_area": {
+        "description": "Mediana de avaliação por m² no treino multiplicada pela área privativa.",
+        "out_of_fold_metrics": {
+          "mae_brl": 65791.72,
+          "rmse_brl": 154607.73,
+          "median_absolute_percentage_error_percent": 14.7628,
+          "p90_absolute_percentage_error_percent": 39.6562,
+          "wape_percent": 22.1984,
+          "smape_percent": 18.7928,
+          "r2": 0.702043
+        }
+      }
+    },
+    "folds": [
+      {
+        "fold": 1,
+        "training_rows": 382,
+        "test_rows": 96,
+        "training_neighborhoods": 153,
+        "test_neighborhoods": 33,
+        "neighborhood_overlap": false
+      },
+      {
+        "fold": 2,
+        "training_rows": 382,
+        "test_rows": 96,
+        "training_neighborhoods": 148,
+        "test_neighborhoods": 38,
+        "neighborhood_overlap": false
+      },
+      {
+        "fold": 3,
+        "training_rows": 382,
+        "test_rows": 96,
+        "training_neighborhoods": 147,
+        "test_neighborhoods": 39,
+        "neighborhood_overlap": false
+      },
+      {
+        "fold": 4,
+        "training_rows": 383,
+        "test_rows": 95,
+        "training_neighborhoods": 148,
+        "test_neighborhoods": 38,
+        "neighborhood_overlap": false
+      },
+      {
+        "fold": 5,
+        "training_rows": 383,
+        "test_rows": 95,
+        "training_neighborhoods": 148,
+        "test_neighborhoods": 38,
+        "neighborhood_overlap": false
+      }
+    ],
+    "temporal_validation_possible": false
+  },
+  "feature_incremental_validation": {
+    "status": "exploratory_spatial_feature_ablation",
+    "rows_with_area_bedrooms_and_parking": 92,
+    "complete_case_coverage_percent": 19.25,
+    "features_tested": [
+      "area_ref_m2 (private area)",
+      "quartos (source field, unit-level evidence unverified)",
+      "vagas (source field, unit-level evidence unverified)"
+    ],
+    "validation": "same 5-fold neighborhood split and same complete-case test rows",
+    "minimum_group_size": 5,
+    "enriched_group_prediction_fallback_rows": 24,
+    "baseline_area_rate": {
+      "mae_brl": 116770.56,
+      "rmse_brl": 222940.82,
+      "median_absolute_percentage_error_percent": 18.7981,
+      "p90_absolute_percentage_error_percent": 39.2753,
+      "wape_percent": 25.5975,
+      "smape_percent": 21.5614,
+      "r2": 0.773779
+    },
+    "area_bedrooms_parking_groups": {
+      "mae_brl": 113304.77,
+      "rmse_brl": 222925.71,
+      "median_absolute_percentage_error_percent": 16.9134,
+      "p90_absolute_percentage_error_percent": 41.5556,
+      "wape_percent": 24.8377,
+      "smape_percent": 20.2773,
+      "r2": 0.773809
+    },
+    "promotion_decision": "not_evaluated_or_approved",
+    "caveat": "Benchmark exploratório na mesma fonte; quartos/vagas precisam de evidência por unidade, e a amostra não é validação independente."
+  },
+  "temporal_validation": {
+    "date_field": "avaliacao_data",
+    "date_field_semantics": "data-base da avaliação, não data de coleta/anúncio",
+    "dated_candidate_rows": 0,
+    "distinct_appraisal_dates": 0,
+    "temporal_validation_possible": false,
+    "status": "blocked_missing_appraisal_date",
+    "reason": "A data-base da avaliação é necessária; data_coleta não a substitui."
+  },
+  "attribute_inventory": [
+    {
+      "attribute": "area_ref_m2",
+      "definition": "Área declarada como privativa no arquivo, m²",
+      "available_rows": 478,
+      "classification": "extraido_sem_documentacao_independente",
+      "operation_path": "Matrícula/documento da unidade ou campo validado na solicitação CAIXA.",
+      "recommendation": "Usar somente após confirmar definição, unidade e vínculo com a unidade."
+    },
+    {
+      "attribute": "quartos",
+      "definition": "Quantidade de dormitórios da unidade",
+      "available_rows": 406,
+      "classification": "extraido_com_evidencia_da_unidade_pendente",
+      "operation_path": "Documento/planta/anúncio da mesma unidade, com vínculo e evidência arquivados.",
+      "recommendation": "Não completar por equivalência com área; manter ausente se não comprovado."
+    },
+    {
+      "attribute": "vagas",
+      "definition": "Quantidade de vagas associadas à unidade",
+      "available_rows": 107,
+      "classification": "extraido_com_evidencia_da_unidade_pendente",
+      "operation_path": "Matrícula/documento da vaga ou campo validado na solicitação CAIXA.",
+      "recommendation": "Não tratar vaga do edifício como vaga privativa da unidade."
+    },
+    {
+      "attribute": "banheiros",
+      "definition": "Quantidade de banheiros da unidade",
+      "available_rows": 0,
+      "classification": "ausente",
+      "operation_path": "Documento/planta da unidade, se disponível no fluxo CAIXA.",
+      "recommendation": "Solicitar dado ou manter ausente; não estimar sem amostra de validação independente."
+    },
+    {
+      "attribute": "elevador",
+      "definition": "Existência de elevador no edifício/bloco",
+      "available_rows": 0,
+      "classification": "ausente",
+      "operation_path": "Documento ou cadastro do edifício identificado por torre/bloco.",
+      "recommendation": "Não inferir por anúncio de outra unidade sem provar mesmo edifício/bloco."
+    },
+    {
+      "attribute": "idade_construcao",
+      "definition": "Idade em anos na data-base da avaliação",
+      "available_rows": 0,
+      "classification": "ausente",
+      "operation_path": "Ano de construção de fonte/documento válido e data-base recebida na operação.",
+      "recommendation": "Calcular apenas com fonte do ano e data-base documentadas."
+    },
+    {
+      "attribute": "conservacao_condominio",
+      "definition": "Estado de conservação do condomínio/edifício",
+      "available_rows": 0,
+      "classification": "ausente",
+      "operation_path": "Inspeção ou evidência atual do edifício, caso requisito seja confirmado.",
+      "recommendation": "Não inferir por idade, preço ou imagem isolada."
+    },
+    {
+      "attribute": "avaliacao_data",
+      "definition": "Data-base do valor de avaliação",
+      "available_rows": 0,
+      "classification": "ausente_no_lote_atual",
+      "operation_path": "Laudo/documento da avaliação CAIXA.",
+      "recommendation": "Obrigatória para validação temporal; data de coleta não substitui."
+    }
+  ],
+  "limitations": [
+    "O campo avaliacao_data está ausente no lote; não é possível fazer validação temporal.",
+    "A origem está rotulada como lista oficial CAIXA, mas autorização, finalidade, metodologia e laudo da avaliação precisam de confirmação documental.",
+    "A coleta é um único retrato temporal de imóveis retomados/ofertados, não uma amostra representativa de todo o mercado nem prova de valor transacionado.",
+    "preco_venda_brl e desconto_pct foram excluídos como preditores para evitar mistura/leakage com o alvo de avaliação.",
+    "avaliacao_brl_m2 é matematicamente derivado do alvo e da área e não foi usado como preditor.",
+    "A validação espacial é um benchmark interno nesta mesma fonte; não equivale à validação independente nem à homologação CAIXA.",
+    "Endereço, identificador do imóvel, link e SQL não são incluídos nos relatórios derivados; acesso e retenção da fonte devem seguir as regras da CAIXA."
+  ],
+  "release_decision": {
+    "appraisal_training_enabled": false,
+    "operational_prediction_enabled": false,
+    "expert_review_required": true,
+    "reason": "O lote fornece rótulos candidatos e permite um benchmark espacial exploratório, mas data-base da avaliação, método, autorização e representatividade ainda não estão validados."
+  },
+  "source": {
+    "sha256": "024da9a34e9803007458f546b8fb1101d1a7a64b9bef9cba31a6418f4a6eaf7c",
+    "delimiter": ",",
+    "collection_date_coverage": 480,
+    "appraisal_date_coverage": 0,
+    "collection_dates": [
+      "2026-10-26"
+    ],
+    "appraisal_dates": []
+  },
+  "generated_at_utc": "2026-10-27T00:26:25.485202+00:00"
+}

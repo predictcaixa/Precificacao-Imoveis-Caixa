@@ -1,0 +1,12 @@
+dados/avm_uploads.sqlite3
+dados/avm_uploads.sqlite3-shm
+dados/avm_uploads.sqlite3-wal
+\.env*
+!.env.example
+__pycache__/
+*.py[cod]
+/deploy/*
+!/deploy/api/
+!/deploy/api/**
+.venv/
+venv/

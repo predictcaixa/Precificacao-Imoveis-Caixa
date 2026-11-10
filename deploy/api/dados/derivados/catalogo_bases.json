@@ -1,0 +1,1608 @@
+{
+  "catalog_version": 1,
+  "generated_at_utc": "2026-10-27T00:56:30.930302+00:00",
+  "purpose": "Inventory and separate datasets by semantic target; this catalog does not approve a source or enable model training.",
+  "summary": {
+    "appraisal_target_selected": true,
+    "appraisal_label_rows": 0,
+    "appraisal_candidate_rows": 0,
+    "caixa_appraisal_validation_rows": 480,
+    "caixa_appraisal_spatial_candidate_rows": 478,
+    "caixa_appraisal_date_coverage_percent": 0.0,
+    "caixa_appraisal_spatial_baseline_validation": {
+      "method": "5-fold spatial cross-validation grouped by neighborhood; each neighborhood appears in test in one fold only.",
+      "rows_evaluated": 478,
+      "neighborhoods_evaluated": 186,
+      "features_used": [
+        "area_ref_m2 (private area)"
+      ],
+      "excluded_as_predictors": [
+        "valor_avaliacao_brl_m2 (derived from target and area)",
+        "preco_venda_brl (auction/listing price, not appraisal target)",
+        "desconto_pct (may be derived from appraisal and price)",
+        "n_do_imovel",
+        "endereco",
+        "link_de_acesso",
+        "sql_iptu"
+      ],
+      "estimators": {
+        "training_citywide_median": {
+          "description": "Mediana municipal do valor de avaliação no conjunto de treino.",
+          "out_of_fold_metrics": {
+            "mae_brl": 90699.93,
+            "rmse_brl": 290393.51,
+            "median_absolute_percentage_error_percent": 12.9603,
+            "p90_absolute_percentage_error_percent": 39.9367,
+            "wape_percent": 30.6025,
+            "smape_percent": 20.9652,
+            "r2": -0.051152
+          }
+        },
+        "training_median_per_m2_times_private_area": {
+          "description": "Mediana de avaliação por m² no treino multiplicada pela área privativa.",
+          "out_of_fold_metrics": {
+            "mae_brl": 65791.72,
+            "rmse_brl": 154607.73,
+            "median_absolute_percentage_error_percent": 14.7628,
+            "p90_absolute_percentage_error_percent": 39.6562,
+            "wape_percent": 22.1984,
+            "smape_percent": 18.7928,
+            "r2": 0.702043
+          }
+        }
+      },
+      "folds": [
+        {
+          "fold": 1,
+          "training_rows": 382,
+          "test_rows": 96,
+          "training_neighborhoods": 153,
+          "test_neighborhoods": 33,
+          "neighborhood_overlap": false
+        },
+        {
+          "fold": 2,
+          "training_rows": 382,
+          "test_rows": 96,
+          "training_neighborhoods": 148,
+          "test_neighborhoods": 38,
+          "neighborhood_overlap": false
+        },
+        {
+          "fold": 3,
+          "training_rows": 382,
+          "test_rows": 96,
+          "training_neighborhoods": 147,
+          "test_neighborhoods": 39,
+          "neighborhood_overlap": false
+        },
+        {
+          "fold": 4,
+          "training_rows": 383,
+          "test_rows": 95,
+          "training_neighborhoods": 148,
+          "test_neighborhoods": 38,
+          "neighborhood_overlap": false
+        },
+        {
+          "fold": 5,
+          "training_rows": 383,
+          "test_rows": 95,
+          "training_neighborhoods": 148,
+          "test_neighborhoods": 38,
+          "neighborhood_overlap": false
+        }
+      ],
+      "temporal_validation_possible": false
+    },
+    "caixa_appraisal_feature_validation": {
+      "status": "exploratory_spatial_feature_ablation",
+      "rows_with_area_bedrooms_and_parking": 92,
+      "complete_case_coverage_percent": 19.25,
+      "features_tested": [
+        "area_ref_m2 (private area)",
+        "quartos (source field, unit-level evidence unverified)",
+        "vagas (source field, unit-level evidence unverified)"
+      ],
+      "validation": "same 5-fold neighborhood split and same complete-case test rows",
+      "minimum_group_size": 5,
+      "enriched_group_prediction_fallback_rows": 24,
+      "baseline_area_rate": {
+        "mae_brl": 116770.56,
+        "rmse_brl": 222940.82,
+        "median_absolute_percentage_error_percent": 18.7981,
+        "p90_absolute_percentage_error_percent": 39.2753,
+        "wape_percent": 25.5975,
+        "smape_percent": 21.5614,
+        "r2": 0.773779
+      },
+      "area_bedrooms_parking_groups": {
+        "mae_brl": 113304.77,
+        "rmse_brl": 222925.71,
+        "median_absolute_percentage_error_percent": 16.9134,
+        "p90_absolute_percentage_error_percent": 41.5556,
+        "wape_percent": 24.8377,
+        "smape_percent": 20.2773,
+        "r2": 0.773809
+      },
+      "promotion_decision": "not_evaluated_or_approved",
+      "caveat": "Benchmark exploratório na mesma fonte; quartos/vagas precisam de evidência por unidade, e a amostra não é validação independente."
+    },
+    "caixa_appraisal_temporal_validation": {
+      "date_field": "avaliacao_data",
+      "date_field_semantics": "data-base da avaliação, não data de coleta/anúncio",
+      "dated_candidate_rows": 0,
+      "distinct_appraisal_dates": 0,
+      "temporal_validation_possible": false,
+      "status": "blocked_missing_appraisal_date",
+      "reason": "A data-base da avaliação é necessária; data_coleta não a substitui."
+    },
+    "caixa_calculation_checks_passed": 100,
+    "caixa_calculation_checks_failed": 0,
+    "caixa_calculation_validation_status": "passed",
+    "caixa_appraisal_attribute_inventory": [
+      {
+        "attribute": "area_ref_m2",
+        "definition": "Área declarada como privativa no arquivo, m²",
+        "available_rows": 478,
+        "classification": "extraido_sem_documentacao_independente",
+        "operation_path": "Matrícula/documento da unidade ou campo validado na solicitação CAIXA.",
+        "recommendation": "Usar somente após confirmar definição, unidade e vínculo com a unidade."
+      },
+      {
+        "attribute": "quartos",
+        "definition": "Quantidade de dormitórios da unidade",
+        "available_rows": 406,
+        "classification": "extraido_com_evidencia_da_unidade_pendente",
+        "operation_path": "Documento/planta/anúncio da mesma unidade, com vínculo e evidência arquivados.",
+        "recommendation": "Não completar por equivalência com área; manter ausente se não comprovado."
+      },
+      {
+        "attribute": "vagas",
+        "definition": "Quantidade de vagas associadas à unidade",
+        "available_rows": 107,
+        "classification": "extraido_com_evidencia_da_unidade_pendente",
+        "operation_path": "Matrícula/documento da vaga ou campo validado na solicitação CAIXA.",
+        "recommendation": "Não tratar vaga do edifício como vaga privativa da unidade."
+      },
+      {
+        "attribute": "banheiros",
+        "definition": "Quantidade de banheiros da unidade",
+        "available_rows": 0,
+        "classification": "ausente",
+        "operation_path": "Documento/planta da unidade, se disponível no fluxo CAIXA.",
+        "recommendation": "Solicitar dado ou manter ausente; não estimar sem amostra de validação independente."
+      },
+      {
+        "attribute": "elevador",
+        "definition": "Existência de elevador no edifício/bloco",
+        "available_rows": 0,
+        "classification": "ausente",
+        "operation_path": "Documento ou cadastro do edifício identificado por torre/bloco.",
+        "recommendation": "Não inferir por anúncio de outra unidade sem provar mesmo edifício/bloco."
+      },
+      {
+        "attribute": "idade_construcao",
+        "definition": "Idade em anos na data-base da avaliação",
+        "available_rows": 0,
+        "classification": "ausente",
+        "operation_path": "Ano de construção de fonte/documento válido e data-base recebida na operação.",
+        "recommendation": "Calcular apenas com fonte do ano e data-base documentadas."
+      },
+      {
+        "attribute": "conservacao_condominio",
+        "definition": "Estado de conservação do condomínio/edifício",
+        "available_rows": 0,
+        "classification": "ausente",
+        "operation_path": "Inspeção ou evidência atual do edifício, caso requisito seja confirmado.",
+        "recommendation": "Não inferir por idade, preço ou imagem isolada."
+      },
+      {
+        "attribute": "avaliacao_data",
+        "definition": "Data-base do valor de avaliação",
+        "available_rows": 0,
+        "classification": "ausente_no_lote_atual",
+        "operation_path": "Laudo/documento da avaliação CAIXA.",
+        "recommendation": "Obrigatória para validação temporal; data de coleta não substitui."
+      }
+    ],
+    "offer_rows": 0,
+    "itbi_eligible_transactions": 42826,
+    "itbi_experiment_training_rows": 31222,
+    "itbi_experiment_test_rows": 11394,
+    "itbi_experiment_estimators": {
+      "global_median": {
+        "description": "Mediana global do valor declarado por m².",
+        "test_metrics": {
+          "mae_brl": 291235.72,
+          "rmse_brl": 807708.08,
+          "mape_percent": 7134098.6401,
+          "smape_percent": 36.2297,
+          "wape_percent": 39.7631,
+          "median_absolute_percentage_error_percent": 29.0909,
+          "p90_absolute_percentage_error_percent": 78.3333,
+          "r2": 0.420393
+        },
+        "test_scope_counts": {
+          "citywide": 11394
+        }
+      },
+      "pattern_median": {
+        "description": "Mediana por código de padrão IPTU; fallback para mediana municipal.",
+        "test_metrics": {
+          "mae_brl": 269748.75,
+          "rmse_brl": 715518.06,
+          "mape_percent": 7011723.3695,
+          "smape_percent": 34.2232,
+          "wape_percent": 36.8295,
+          "median_absolute_percentage_error_percent": 27.2096,
+          "p90_absolute_percentage_error_percent": 74.1172,
+          "r2": 0.545152
+        },
+        "test_scope_counts": {
+          "iptu_pattern": 11394
+        }
+      },
+      "cep_pattern_median": {
+        "description": "Mediana por prefixo de CEP + código de padrão IPTU; fallback por padrão IPTU e depois municipal.",
+        "test_metrics": {
+          "mae_brl": 254020.79,
+          "rmse_brl": 709116.01,
+          "mape_percent": 7089142.3713,
+          "smape_percent": 30.9587,
+          "wape_percent": 34.6821,
+          "median_absolute_percentage_error_percent": 23.6348,
+          "p90_absolute_percentage_error_percent": 70.5847,
+          "r2": 0.553255
+        },
+        "test_scope_counts": {
+          "cep_prefix5_and_iptu_pattern": 3050,
+          "iptu_pattern_fallback": 8344
+        }
+      }
+    },
+    "itbi_experiment_target_quality": {
+      "training": {
+        "min_brl": 0.01,
+        "p01_brl": 21000.0,
+        "median_brl": 442394.64,
+        "max_brl": 46300000.0,
+        "below_1000_brl_count": 105,
+        "below_1000_brl_share_percent": 0.3363,
+        "one_cent_value_count": 60
+      },
+      "test": {
+        "min_brl": 0.01,
+        "p01_brl": 65077.89,
+        "median_brl": 440000.0,
+        "max_brl": 26600000.0,
+        "below_1000_brl_count": 32,
+        "below_1000_brl_share_percent": 0.2808,
+        "one_cent_value_count": 15
+      },
+      "note": "Valores positivos muito baixos foram mantidos por não haver regra documentada que autorize excluí-los. MAPE é extremamente sensível a esses denominadores; revisar os casos com a fonte antes de qualquer decisão de uso."
+    },
+    "enriched_join_unique": 9658,
+    "enriched_join_ambiguous": 2,
+    "training_enabled": false,
+    "missing_catalog_sources": []
+  },
+  "datasets": [
+    {
+      "id": "itbi_pmsp_transactions",
+      "name": "Transações declaradas ITBI/PMSP",
+      "path": "dados/1. APARTAMENTOS.xlsx",
+      "data_kind": "transaction",
+      "target": "Valor declarado pelo contribuinte em transação ITBI",
+      "unit_of_analysis": "registro administrativo de transação/cadastro",
+      "allowed_use": "referência experimental de transações e análise técnica",
+      "training_role": "not_a_CAIXA_appraisal_target",
+      "limitations": [
+        "Valor declarado no ITBI não é automaticamente valor de avaliação.",
+        "Área construída cadastral não equivale automaticamente à área privativa ou total."
+      ],
+      "exists": true,
+      "size_bytes": 39447013,
+      "sha256": "9073d9f5f7be59a549e0359ef883086cf1b59cd0b16acb421566aa49486cc6af",
+      "csv_data_rows": null,
+      "record_count": 45103,
+      "reference_period": {
+        "start": "2026-01-02",
+        "end": "2026-09-07",
+        "transactions": 42826
+      },
+      "eligible_transaction_count": 42826
+    },
+    {
+      "id": "enriched_workbook",
+      "name": "Planilha enriquecida de imóveis",
+      "path": "dados/22.10.2026.xlsx",
+      "data_kind": "mixed_unverified_attributes",
+      "target": null,
+      "unit_of_analysis": "registro de imóvel/unidade a confirmar",
+      "allowed_use": "auditoria de vínculo e investigação de proveniência",
+      "training_role": "not_training_eligible_without_attribute_evidence",
+      "limitations": [
+        "Campos de área privativa, quartos, banheiros, vagas e elevador não têm proveniência validada.",
+        "O preenchimento de uma célula não comprova evidência ou associação correta à unidade."
+      ],
+      "exists": true,
+      "size_bytes": 2123604,
+      "sha256": "284348e1aec61241d89b3135c76c5b4e3ed6ec60475c7bd234ef1c9adc486e37",
+      "csv_data_rows": null,
+      "record_count": 9660,
+      "join_audit": {
+        "key_fields": [
+          "SQL",
+          "Data de Transação",
+          "Valor de Transação (declarado pelo contribuinte)"
+        ],
+        "matched_unique_rows": 9658,
+        "matched_ambiguous_rows": 2,
+        "unmatched_rows": 0,
+        "match_rate": 1.0,
+        "duplicate_source_key_groups": 63,
+        "ambiguous_groups_with_comparable_attributes": 2,
+        "ambiguous_groups_consistent_on_compared_attributes": 2,
+        "ambiguous_groups_identical_on_all_source_fields": 2
+      }
+    },
+    {
+      "id": "evaluation_labels",
+      "name": "Rótulos de avaliações de mercado",
+      "path": "dados/derivados/avaliacoes_imoveis_template.csv",
+      "data_kind": "appraisal",
+      "target": "valor de mercado avaliado em R$ na data-base da avaliação",
+      "unit_of_analysis": "unidade residencial identificada por token pseudonimizado",
+      "allowed_use": "entrada controlada para auditoria de avaliações autorizadas",
+      "training_role": "blocked_until_expert_review_and_independent_validation",
+      "limitations": [
+        "A triagem de CSV não comprova autenticidade, autorização, representatividade ou qualidade profissional.",
+        "O template vazio não é uma base de treinamento."
+      ],
+      "exists": true,
+      "size_bytes": 718,
+      "sha256": "e7c7b9778532278403826f13ae2c48dc756098729d40219ab83992305299d6e7",
+      "csv_data_rows": 0,
+      "record_count": 0,
+      "audit_status": {
+        "input_file": "avaliacoes_imoveis_template.csv",
+        "target_definition": "final reviewed market-value appraisal in BRL at valuation_date",
+        "row_count": 0,
+        "candidate_rows_for_expert_review": 0,
+        "unique_property_tokens": 0,
+        "repeated_property_groups": 0,
+        "training_ready": false,
+        "training_block_reason": "A aprovação técnica, a suficiência/representatividade da amostra, a validação independente e a compatibilidade operacional não são decididas por esta auditoria sintática.",
+        "errors": [],
+        "warnings": [],
+        "counts": {
+          "duplicate_valuation_record_id_groups": 0,
+          "rows_with_validated_feature_evidence": 0,
+          "unique_property_tokens": 0,
+          "repeated_property_groups": 0
+        },
+        "feature_evidence_coverage": {
+          "bedrooms": {
+            "rows_with_evidence": 0,
+            "coverage_percent_of_all_rows": 0
+          },
+          "bathrooms": {
+            "rows_with_evidence": 0,
+            "coverage_percent_of_all_rows": 0
+          },
+          "parking_spaces": {
+            "rows_with_evidence": 0,
+            "coverage_percent_of_all_rows": 0
+          },
+          "elevator": {
+            "rows_with_evidence": 0,
+            "coverage_percent_of_all_rows": 0
+          },
+          "building_year": {
+            "rows_with_evidence": 0,
+            "coverage_percent_of_all_rows": 0
+          }
+        },
+        "warnings_about_sampling": [
+          "Não há mínimo universal de observações codificado; os responsáveis devem justificar escopo e representatividade.",
+          "Separar treino/teste por property_token para evitar que avaliações da mesma unidade vazem entre partições.",
+          "Usar partição temporal quando a data-base e o volume permitirem; relatar métricas somente para o alvo de avaliação."
+        ]
+      }
+    },
+    {
+      "id": "caixa_sp_validation_candidate",
+      "name": "Lote CAIXA de avaliações para validação",
+      "path": "scripts/dados/caixa_sp_validacao.csv",
+      "data_kind": "caixa_appraisal_validation_candidate",
+      "target": "Valor de avaliação CAIXA de imóvel retomado",
+      "unit_of_analysis": "imóvel anunciado em retrato de coleta",
+      "allowed_use": "auditoria de rótulos e benchmark espacial exploratório",
+      "training_role": "candidate_labels_pending_expert_review",
+      "limitations": [
+        "Data da avaliação ausente no lote; não permite validação temporal.",
+        "Autorização, metodologia, representatividade e identidade da unidade precisam de revisão.",
+        "Preço de venda/desconto não pode ser confundido com o valor de avaliação."
+      ],
+      "exists": true,
+      "size_bytes": 172275,
+      "sha256": "024da9a34e9803007458f546b8fb1101d1a7a64b9bef9cba31a6418f4a6eaf7c",
+      "csv_data_rows": 480,
+      "record_count": 480,
+      "audit_status": {
+        "dataset_id": "caixa_sp_appraisal_validation_candidate",
+        "input_file": "caixa_sp_validacao.csv",
+        "status": "candidate_for_expert_review_not_approved_for_operational_use",
+        "record_count": 480,
+        "candidate_rows_for_spatial_validation": 478,
+        "validation_rows_excluded_from_spatial_candidate": 2,
+        "target": {
+          "column": "valor_avaliacao_brl",
+          "definition_in_source": "avaliacao_caixa_imovel_retomado",
+          "unit": "BRL",
+          "target_summary": {
+            "valid_positive_targets": 480,
+            "min_brl": 136179.75,
+            "median_brl": 233836.5,
+            "max_brl": 3020000.0
+          }
+        },
+        "quality": {
+          "counts": {
+            "area_type:privativa": 480,
+            "bedrooms_missing_or_invalid": 74,
+            "bedrooms_present": 406,
+            "parking_spaces_missing_or_invalid": 373,
+            "parking_spaces_present": 107,
+            "property_type:apartamento": 479,
+            "property_type:sala": 1,
+            "source:caixa_lista_imoveis_oficial": 480,
+            "target_nature:avaliacao_caixa_imovel_retomado": 480,
+            "valid_collection_date": 480
+          },
+          "invalid_rows_by_reason": {
+            "area_missing_or_out_of_range": 1,
+            "unsupported_property_type": 1
+          },
+          "unique_property_ids": 480,
+          "duplicate_property_id_groups": 0,
+          "appraisal_date_coverage_percent": 0.0,
+          "target_per_m2_matches_target_divided_by_area_rows": 480,
+          "target_per_m2_checked_rows": 480,
+          "bedrooms_coverage_percent": 84.58,
+          "parking_spaces_coverage_percent": 22.29,
+          "collection_date_distinct_values": 1,
+          "appraisal_date_distinct_values": 0
+        },
+        "spatial_baseline_validation": {
+          "method": "5-fold spatial cross-validation grouped by neighborhood; each neighborhood appears in test in one fold only.",
+          "rows_evaluated": 478,
+          "neighborhoods_evaluated": 186,
+          "features_used": [
+            "area_ref_m2 (private area)"
+          ],
+          "excluded_as_predictors": [
+            "valor_avaliacao_brl_m2 (derived from target and area)",
+            "preco_venda_brl (auction/listing price, not appraisal target)",
+            "desconto_pct (may be derived from appraisal and price)",
+            "n_do_imovel",
+            "endereco",
+            "link_de_acesso",
+            "sql_iptu"
+          ],
+          "estimators": {
+            "training_citywide_median": {
+              "description": "Mediana municipal do valor de avaliação no conjunto de treino.",
+              "out_of_fold_metrics": {
+                "mae_brl": 90699.93,
+                "rmse_brl": 290393.51,
+                "median_absolute_percentage_error_percent": 12.9603,
+                "p90_absolute_percentage_error_percent": 39.9367,
+                "wape_percent": 30.6025,
+                "smape_percent": 20.9652,
+                "r2": -0.051152
+              }
+            },
+            "training_median_per_m2_times_private_area": {
+              "description": "Mediana de avaliação por m² no treino multiplicada pela área privativa.",
+              "out_of_fold_metrics": {
+                "mae_brl": 65791.72,
+                "rmse_brl": 154607.73,
+                "median_absolute_percentage_error_percent": 14.7628,
+                "p90_absolute_percentage_error_percent": 39.6562,
+                "wape_percent": 22.1984,
+                "smape_percent": 18.7928,
+                "r2": 0.702043
+              }
+            }
+          },
+          "folds": [
+            {
+              "fold": 1,
+              "training_rows": 382,
+              "test_rows": 96,
+              "training_neighborhoods": 153,
+              "test_neighborhoods": 33,
+              "neighborhood_overlap": false
+            },
+            {
+              "fold": 2,
+              "training_rows": 382,
+              "test_rows": 96,
+              "training_neighborhoods": 148,
+              "test_neighborhoods": 38,
+              "neighborhood_overlap": false
+            },
+            {
+              "fold": 3,
+              "training_rows": 382,
+              "test_rows": 96,
+              "training_neighborhoods": 147,
+              "test_neighborhoods": 39,
+              "neighborhood_overlap": false
+            },
+            {
+              "fold": 4,
+              "training_rows": 383,
+              "test_rows": 95,
+              "training_neighborhoods": 148,
+              "test_neighborhoods": 38,
+              "neighborhood_overlap": false
+            },
+            {
+              "fold": 5,
+              "training_rows": 383,
+              "test_rows": 95,
+              "training_neighborhoods": 148,
+              "test_neighborhoods": 38,
+              "neighborhood_overlap": false
+            }
+          ],
+          "temporal_validation_possible": false
+        },
+        "feature_incremental_validation": {
+          "status": "exploratory_spatial_feature_ablation",
+          "rows_with_area_bedrooms_and_parking": 92,
+          "complete_case_coverage_percent": 19.25,
+          "features_tested": [
+            "area_ref_m2 (private area)",
+            "quartos (source field, unit-level evidence unverified)",
+            "vagas (source field, unit-level evidence unverified)"
+          ],
+          "validation": "same 5-fold neighborhood split and same complete-case test rows",
+          "minimum_group_size": 5,
+          "enriched_group_prediction_fallback_rows": 24,
+          "baseline_area_rate": {
+            "mae_brl": 116770.56,
+            "rmse_brl": 222940.82,
+            "median_absolute_percentage_error_percent": 18.7981,
+            "p90_absolute_percentage_error_percent": 39.2753,
+            "wape_percent": 25.5975,
+            "smape_percent": 21.5614,
+            "r2": 0.773779
+          },
+          "area_bedrooms_parking_groups": {
+            "mae_brl": 113304.77,
+            "rmse_brl": 222925.71,
+            "median_absolute_percentage_error_percent": 16.9134,
+            "p90_absolute_percentage_error_percent": 41.5556,
+            "wape_percent": 24.8377,
+            "smape_percent": 20.2773,
+            "r2": 0.773809
+          },
+          "promotion_decision": "not_evaluated_or_approved",
+          "caveat": "Benchmark exploratório na mesma fonte; quartos/vagas precisam de evidência por unidade, e a amostra não é validação independente."
+        },
+        "temporal_validation": {
+          "date_field": "avaliacao_data",
+          "date_field_semantics": "data-base da avaliação, não data de coleta/anúncio",
+          "dated_candidate_rows": 0,
+          "distinct_appraisal_dates": 0,
+          "temporal_validation_possible": false,
+          "status": "blocked_missing_appraisal_date",
+          "reason": "A data-base da avaliação é necessária; data_coleta não a substitui."
+        },
+        "attribute_inventory": [
+          {
+            "attribute": "area_ref_m2",
+            "definition": "Área declarada como privativa no arquivo, m²",
+            "available_rows": 478,
+            "classification": "extraido_sem_documentacao_independente",
+            "operation_path": "Matrícula/documento da unidade ou campo validado na solicitação CAIXA.",
+            "recommendation": "Usar somente após confirmar definição, unidade e vínculo com a unidade."
+          },
+          {
+            "attribute": "quartos",
+            "definition": "Quantidade de dormitórios da unidade",
+            "available_rows": 406,
+            "classification": "extraido_com_evidencia_da_unidade_pendente",
+            "operation_path": "Documento/planta/anúncio da mesma unidade, com vínculo e evidência arquivados.",
+            "recommendation": "Não completar por equivalência com área; manter ausente se não comprovado."
+          },
+          {
+            "attribute": "vagas",
+            "definition": "Quantidade de vagas associadas à unidade",
+            "available_rows": 107,
+            "classification": "extraido_com_evidencia_da_unidade_pendente",
+            "operation_path": "Matrícula/documento da vaga ou campo validado na solicitação CAIXA.",
+            "recommendation": "Não tratar vaga do edifício como vaga privativa da unidade."
+          },
+          {
+            "attribute": "banheiros",
+            "definition": "Quantidade de banheiros da unidade",
+            "available_rows": 0,
+            "classification": "ausente",
+            "operation_path": "Documento/planta da unidade, se disponível no fluxo CAIXA.",
+            "recommendation": "Solicitar dado ou manter ausente; não estimar sem amostra de validação independente."
+          },
+          {
+            "attribute": "elevador",
+            "definition": "Existência de elevador no edifício/bloco",
+            "available_rows": 0,
+            "classification": "ausente",
+            "operation_path": "Documento ou cadastro do edifício identificado por torre/bloco.",
+            "recommendation": "Não inferir por anúncio de outra unidade sem provar mesmo edifício/bloco."
+          },
+          {
+            "attribute": "idade_construcao",
+            "definition": "Idade em anos na data-base da avaliação",
+            "available_rows": 0,
+            "classification": "ausente",
+            "operation_path": "Ano de construção de fonte/documento válido e data-base recebida na operação.",
+            "recommendation": "Calcular apenas com fonte do ano e data-base documentadas."
+          },
+          {
+            "attribute": "conservacao_condominio",
+            "definition": "Estado de conservação do condomínio/edifício",
+            "available_rows": 0,
+            "classification": "ausente",
+            "operation_path": "Inspeção ou evidência atual do edifício, caso requisito seja confirmado.",
+            "recommendation": "Não inferir por idade, preço ou imagem isolada."
+          },
+          {
+            "attribute": "avaliacao_data",
+            "definition": "Data-base do valor de avaliação",
+            "available_rows": 0,
+            "classification": "ausente_no_lote_atual",
+            "operation_path": "Laudo/documento da avaliação CAIXA.",
+            "recommendation": "Obrigatória para validação temporal; data de coleta não substitui."
+          }
+        ],
+        "limitations": [
+          "O campo avaliacao_data está ausente no lote; não é possível fazer validação temporal.",
+          "A origem está rotulada como lista oficial CAIXA, mas autorização, finalidade, metodologia e laudo da avaliação precisam de confirmação documental.",
+          "A coleta é um único retrato temporal de imóveis retomados/ofertados, não uma amostra representativa de todo o mercado nem prova de valor transacionado.",
+          "preco_venda_brl e desconto_pct foram excluídos como preditores para evitar mistura/leakage com o alvo de avaliação.",
+          "avaliacao_brl_m2 é matematicamente derivado do alvo e da área e não foi usado como preditor.",
+          "A validação espacial é um benchmark interno nesta mesma fonte; não equivale à validação independente nem à homologação CAIXA.",
+          "Endereço, identificador do imóvel, link e SQL não são incluídos nos relatórios derivados; acesso e retenção da fonte devem seguir as regras da CAIXA."
+        ],
+        "release_decision": {
+          "appraisal_training_enabled": false,
+          "operational_prediction_enabled": false,
+          "expert_review_required": true,
+          "reason": "O lote fornece rótulos candidatos e permite um benchmark espacial exploratório, mas data-base da avaliação, método, autorização e representatividade ainda não estão validados."
+        },
+        "source": {
+          "sha256": "024da9a34e9803007458f546b8fb1101d1a7a64b9bef9cba31a6418f4a6eaf7c",
+          "delimiter": ",",
+          "collection_date_coverage": 480,
+          "appraisal_date_coverage": 0,
+          "collection_dates": [
+            "2026-10-26"
+          ],
+          "appraisal_dates": []
+        },
+        "generated_at_utc": "2026-10-27T00:56:30.362097+00:00"
+      }
+    },
+    {
+      "id": "caixa_calculation_verification",
+      "name": "Verificação independente dos cálculos CAIXA",
+      "path": "scripts/dados/caixa_sp_validacao_calculation_check.json",
+      "data_kind": "calculation_verification",
+      "target": null,
+      "unit_of_analysis": "checagem agregada da auditoria",
+      "allowed_use": "verificação reprodutível da aritmética e das métricas reportadas",
+      "training_role": "not_training_data",
+      "limitations": [
+        "Verifica a implementação aritmética, não valida a origem ou qualidade dos rótulos.",
+        "A simulação sintética não é evidência de desempenho de avaliação."
+      ],
+      "exists": true,
+      "size_bytes": 15240,
+      "sha256": "85d301314ba55d91601c8a86ba782f1255998b043e872a913e7a6299681bbeb9",
+      "csv_data_rows": null,
+      "record_count": 100,
+      "audit_status": {
+        "status": "passed",
+        "source_file": "caixa_sp_validacao.csv",
+        "source_sha256": "024da9a34e9803007458f546b8fb1101d1a7a64b9bef9cba31a6418f4a6eaf7c",
+        "audit_file": "caixa_sp_validacao_audit.json",
+        "rows_checked": 480,
+        "eligible_records_checked": 478,
+        "checks_passed": 100,
+        "checks_failed": 0,
+        "checks": [
+          {
+            "check": "source_row_count",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "spatial_candidate_count",
+            "passed": true,
+            "expected": 478,
+            "reported": 478
+          },
+          {
+            "check": "target_positive_count",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "target_min_brl",
+            "passed": true,
+            "expected": 136179.75,
+            "reported": 136179.75
+          },
+          {
+            "check": "target_median_brl",
+            "passed": true,
+            "expected": 233836.5,
+            "reported": 233836.5
+          },
+          {
+            "check": "target_max_brl",
+            "passed": true,
+            "expected": 3020000.0,
+            "reported": 3020000.0
+          },
+          {
+            "check": "spatial_rows_evaluated",
+            "passed": true,
+            "expected": 478,
+            "reported": 478
+          },
+          {
+            "check": "spatial_neighborhood_count",
+            "passed": true,
+            "expected": 186,
+            "reported": 186
+          },
+          {
+            "check": "spatial_fold_count",
+            "passed": true,
+            "expected": 5,
+            "reported": 5
+          },
+          {
+            "check": "fold_1_training_rows",
+            "passed": true,
+            "expected": 382,
+            "reported": 382
+          },
+          {
+            "check": "fold_1_test_rows",
+            "passed": true,
+            "expected": 96,
+            "reported": 96
+          },
+          {
+            "check": "fold_1_training_neighborhoods",
+            "passed": true,
+            "expected": 153,
+            "reported": 153
+          },
+          {
+            "check": "fold_1_test_neighborhoods",
+            "passed": true,
+            "expected": 33,
+            "reported": 33
+          },
+          {
+            "check": "fold_1_neighborhood_overlap",
+            "passed": true,
+            "expected": false,
+            "reported": false
+          },
+          {
+            "check": "fold_2_training_rows",
+            "passed": true,
+            "expected": 382,
+            "reported": 382
+          },
+          {
+            "check": "fold_2_test_rows",
+            "passed": true,
+            "expected": 96,
+            "reported": 96
+          },
+          {
+            "check": "fold_2_training_neighborhoods",
+            "passed": true,
+            "expected": 148,
+            "reported": 148
+          },
+          {
+            "check": "fold_2_test_neighborhoods",
+            "passed": true,
+            "expected": 38,
+            "reported": 38
+          },
+          {
+            "check": "fold_2_neighborhood_overlap",
+            "passed": true,
+            "expected": false,
+            "reported": false
+          },
+          {
+            "check": "fold_3_training_rows",
+            "passed": true,
+            "expected": 382,
+            "reported": 382
+          },
+          {
+            "check": "fold_3_test_rows",
+            "passed": true,
+            "expected": 96,
+            "reported": 96
+          },
+          {
+            "check": "fold_3_training_neighborhoods",
+            "passed": true,
+            "expected": 147,
+            "reported": 147
+          },
+          {
+            "check": "fold_3_test_neighborhoods",
+            "passed": true,
+            "expected": 39,
+            "reported": 39
+          },
+          {
+            "check": "fold_3_neighborhood_overlap",
+            "passed": true,
+            "expected": false,
+            "reported": false
+          },
+          {
+            "check": "fold_4_training_rows",
+            "passed": true,
+            "expected": 383,
+            "reported": 383
+          },
+          {
+            "check": "fold_4_test_rows",
+            "passed": true,
+            "expected": 95,
+            "reported": 95
+          },
+          {
+            "check": "fold_4_training_neighborhoods",
+            "passed": true,
+            "expected": 148,
+            "reported": 148
+          },
+          {
+            "check": "fold_4_test_neighborhoods",
+            "passed": true,
+            "expected": 38,
+            "reported": 38
+          },
+          {
+            "check": "fold_4_neighborhood_overlap",
+            "passed": true,
+            "expected": false,
+            "reported": false
+          },
+          {
+            "check": "fold_5_training_rows",
+            "passed": true,
+            "expected": 383,
+            "reported": 383
+          },
+          {
+            "check": "fold_5_test_rows",
+            "passed": true,
+            "expected": 95,
+            "reported": 95
+          },
+          {
+            "check": "fold_5_training_neighborhoods",
+            "passed": true,
+            "expected": 148,
+            "reported": 148
+          },
+          {
+            "check": "fold_5_test_neighborhoods",
+            "passed": true,
+            "expected": 38,
+            "reported": 38
+          },
+          {
+            "check": "fold_5_neighborhood_overlap",
+            "passed": true,
+            "expected": false,
+            "reported": false
+          },
+          {
+            "check": "spatial_training_citywide_median_mae_brl",
+            "passed": true,
+            "expected": 90699.93,
+            "reported": 90699.93
+          },
+          {
+            "check": "spatial_training_citywide_median_rmse_brl",
+            "passed": true,
+            "expected": 290393.51,
+            "reported": 290393.51
+          },
+          {
+            "check": "spatial_training_citywide_median_median_absolute_percentage_error_percent",
+            "passed": true,
+            "expected": 12.9603,
+            "reported": 12.9603
+          },
+          {
+            "check": "spatial_training_citywide_median_p90_absolute_percentage_error_percent",
+            "passed": true,
+            "expected": 39.9367,
+            "reported": 39.9367
+          },
+          {
+            "check": "spatial_training_citywide_median_wape_percent",
+            "passed": true,
+            "expected": 30.6025,
+            "reported": 30.6025
+          },
+          {
+            "check": "spatial_training_citywide_median_smape_percent",
+            "passed": true,
+            "expected": 20.9652,
+            "reported": 20.9652
+          },
+          {
+            "check": "spatial_training_citywide_median_r2",
+            "passed": true,
+            "expected": -0.051152,
+            "reported": -0.051152
+          },
+          {
+            "check": "spatial_training_median_per_m2_times_private_area_mae_brl",
+            "passed": true,
+            "expected": 65791.72,
+            "reported": 65791.72
+          },
+          {
+            "check": "spatial_training_median_per_m2_times_private_area_rmse_brl",
+            "passed": true,
+            "expected": 154607.73,
+            "reported": 154607.73
+          },
+          {
+            "check": "spatial_training_median_per_m2_times_private_area_median_absolute_percentage_error_percent",
+            "passed": true,
+            "expected": 14.7628,
+            "reported": 14.7628
+          },
+          {
+            "check": "spatial_training_median_per_m2_times_private_area_p90_absolute_percentage_error_percent",
+            "passed": true,
+            "expected": 39.6562,
+            "reported": 39.6562
+          },
+          {
+            "check": "spatial_training_median_per_m2_times_private_area_wape_percent",
+            "passed": true,
+            "expected": 22.1984,
+            "reported": 22.1984
+          },
+          {
+            "check": "spatial_training_median_per_m2_times_private_area_smape_percent",
+            "passed": true,
+            "expected": 18.7928,
+            "reported": 18.7928
+          },
+          {
+            "check": "spatial_training_median_per_m2_times_private_area_r2",
+            "passed": true,
+            "expected": 0.702043,
+            "reported": 0.702043
+          },
+          {
+            "check": "feature_complete_case_count",
+            "passed": true,
+            "expected": 92,
+            "reported": 92
+          },
+          {
+            "check": "feature_fallback_count",
+            "passed": true,
+            "expected": 24,
+            "reported": 24
+          },
+          {
+            "check": "feature_baseline_area_rate_mae_brl",
+            "passed": true,
+            "expected": 116770.56,
+            "reported": 116770.56
+          },
+          {
+            "check": "feature_baseline_area_rate_rmse_brl",
+            "passed": true,
+            "expected": 222940.82,
+            "reported": 222940.82
+          },
+          {
+            "check": "feature_baseline_area_rate_median_absolute_percentage_error_percent",
+            "passed": true,
+            "expected": 18.7981,
+            "reported": 18.7981
+          },
+          {
+            "check": "feature_baseline_area_rate_p90_absolute_percentage_error_percent",
+            "passed": true,
+            "expected": 39.2753,
+            "reported": 39.2753
+          },
+          {
+            "check": "feature_baseline_area_rate_wape_percent",
+            "passed": true,
+            "expected": 25.5975,
+            "reported": 25.5975
+          },
+          {
+            "check": "feature_baseline_area_rate_smape_percent",
+            "passed": true,
+            "expected": 21.5614,
+            "reported": 21.5614
+          },
+          {
+            "check": "feature_baseline_area_rate_r2",
+            "passed": true,
+            "expected": 0.773779,
+            "reported": 0.773779
+          },
+          {
+            "check": "feature_area_bedrooms_parking_groups_mae_brl",
+            "passed": true,
+            "expected": 113304.77,
+            "reported": 113304.77
+          },
+          {
+            "check": "feature_area_bedrooms_parking_groups_rmse_brl",
+            "passed": true,
+            "expected": 222925.71,
+            "reported": 222925.71
+          },
+          {
+            "check": "feature_area_bedrooms_parking_groups_median_absolute_percentage_error_percent",
+            "passed": true,
+            "expected": 16.9134,
+            "reported": 16.9134
+          },
+          {
+            "check": "feature_area_bedrooms_parking_groups_p90_absolute_percentage_error_percent",
+            "passed": true,
+            "expected": 41.5556,
+            "reported": 41.5556
+          },
+          {
+            "check": "feature_area_bedrooms_parking_groups_wape_percent",
+            "passed": true,
+            "expected": 24.8377,
+            "reported": 24.8377
+          },
+          {
+            "check": "feature_area_bedrooms_parking_groups_smape_percent",
+            "passed": true,
+            "expected": 20.2773,
+            "reported": 20.2773
+          },
+          {
+            "check": "feature_area_bedrooms_parking_groups_r2",
+            "passed": true,
+            "expected": 0.773809,
+            "reported": 0.773809
+          },
+          {
+            "check": "independent_bedrooms_count",
+            "passed": true,
+            "expected": 406,
+            "reported": 406
+          },
+          {
+            "check": "independent_parking_count",
+            "passed": true,
+            "expected": 107,
+            "reported": 107
+          },
+          {
+            "check": "bedroom_coverage_percent",
+            "passed": true,
+            "expected": 84.58,
+            "reported": 84.58
+          },
+          {
+            "check": "parking_coverage_percent",
+            "passed": true,
+            "expected": 22.29,
+            "reported": 22.29
+          },
+          {
+            "check": "target_per_m2_match_count",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "target_per_m2_checked_rows",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "appraisal_date_coverage_count",
+            "passed": true,
+            "expected": 0,
+            "reported": 0
+          },
+          {
+            "check": "appraisal_date_coverage_percent",
+            "passed": true,
+            "expected": 0.0,
+            "reported": 0.0
+          },
+          {
+            "check": "collection_date_distinct_count",
+            "passed": true,
+            "expected": 1,
+            "reported": 1
+          },
+          {
+            "check": "appraisal_date_distinct_count",
+            "passed": true,
+            "expected": 0,
+            "reported": 0
+          },
+          {
+            "check": "unique_property_id_count",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "duplicate_property_id_group_count",
+            "passed": true,
+            "expected": 0,
+            "reported": 0
+          },
+          {
+            "check": "quality_count_property_type_apartamento",
+            "passed": true,
+            "expected": 479,
+            "reported": 479
+          },
+          {
+            "check": "quality_count_property_type_sala",
+            "passed": true,
+            "expected": 1,
+            "reported": 1
+          },
+          {
+            "check": "quality_count_target_nature_avaliacao_caixa_imovel_retomado",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "quality_count_source_caixa_lista_imoveis_oficial",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "quality_count_area_type_privativa",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "quality_count_valid_collection_date",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "quality_count_valid_appraisal_date",
+            "passed": true,
+            "expected": 0,
+            "reported": 0
+          },
+          {
+            "check": "excluded_spatial_candidate_count",
+            "passed": true,
+            "expected": 2,
+            "reported": 2
+          },
+          {
+            "check": "candidate_exclusion_reasons",
+            "passed": true,
+            "expected": {
+              "area_missing_or_out_of_range": 1,
+              "unsupported_property_type": 1
+            },
+            "reported": {
+              "area_missing_or_out_of_range": 1,
+              "unsupported_property_type": 1
+            }
+          },
+          {
+            "check": "area_coverage_candidate_rows",
+            "passed": true,
+            "expected": 478,
+            "reported": 478
+          },
+          {
+            "check": "attribute_inventory_quartos",
+            "passed": true,
+            "expected": 406,
+            "reported": 406
+          },
+          {
+            "check": "attribute_inventory_vagas",
+            "passed": true,
+            "expected": 107,
+            "reported": 107
+          },
+          {
+            "check": "attribute_inventory_avaliacao_data",
+            "passed": true,
+            "expected": 0,
+            "reported": 0
+          },
+          {
+            "check": "feature_complete_case_coverage_percent",
+            "passed": true,
+            "expected": 19.25,
+            "reported": 19.25
+          },
+          {
+            "check": "temporal_dated_candidate_count",
+            "passed": true,
+            "expected": 0,
+            "reported": 0
+          },
+          {
+            "check": "temporal_distinct_appraisal_dates",
+            "passed": true,
+            "expected": 0,
+            "reported": 0
+          },
+          {
+            "check": "source_collection_date_coverage",
+            "passed": true,
+            "expected": 480,
+            "reported": 480
+          },
+          {
+            "check": "source_appraisal_date_coverage",
+            "passed": true,
+            "expected": 0,
+            "reported": 0
+          },
+          {
+            "check": "temporal_validation_blocked_without_dates",
+            "passed": true,
+            "expected": true,
+            "reported": true
+          },
+          {
+            "check": "operational_prediction_remains_blocked",
+            "passed": true,
+            "expected": false,
+            "reported": false
+          },
+          {
+            "check": "audit_sha256_matches_source",
+            "passed": true,
+            "expected": "024da9a34e9803007458f546b8fb1101d1a7a64b9bef9cba31a6418f4a6eaf7c",
+            "reported": "024da9a34e9803007458f546b8fb1101d1a7a64b9bef9cba31a6418f4a6eaf7c"
+          },
+          {
+            "check": "simulation_hand_example_mae",
+            "passed": true,
+            "expected": 10,
+            "reported": 10.0
+          },
+          {
+            "check": "simulation_hand_example_wape",
+            "passed": true,
+            "expected": 5,
+            "reported": 5.0
+          },
+          {
+            "check": "simulation_hand_example_r2",
+            "passed": true,
+            "expected": 0.975,
+            "reported": 0.975
+          }
+        ],
+        "privacy": "No property IDs, addresses, URLs, SQLs, or row-level outputs are included.",
+        "methodology": "Recomputed counts, target aggregates, coverage, target-per-area arithmetic, spatial folds and their metrics, feature comparison and temporal gating from the raw CSV with an independent reference implementation. The hand simulation uses y=[100,200,300], predictions=[90,220,300]."
+      }
+    },
+    {
+      "id": "asking_price_offers",
+      "name": "Ofertas imobiliárias",
+      "path": "dados/derivados/ofertas_imoveis_template.csv",
+      "data_kind": "asking_price_offer",
+      "target": "preço pedido no anúncio na data/hora da captura",
+      "unit_of_analysis": "anúncio de imóvel",
+      "allowed_use": "auditoria de uma base de oferta separada, após confirmar direitos de uso",
+      "training_role": "separate_target_not_appraisal",
+      "limitations": [
+        "Preço anunciado não é preço transacionado nem valor de avaliação.",
+        "Amostra atual sem anúncios auditados."
+      ],
+      "exists": true,
+      "size_bytes": 936,
+      "sha256": "0e4dbe4d090bbb36ab0ae01675fc2fbefa2347a793156d822aeb307e7806c891",
+      "csv_data_rows": 0,
+      "record_count": 0,
+      "audit_status": {
+        "input_file": "ofertas_imoveis_template.csv",
+        "row_count": 0,
+        "required_columns_missing": [],
+        "training_ready": false,
+        "initial_screening_passed": false,
+        "training_block_reason": "A auditoria sintática não comprova licença, identidade da unidade, representatividade, deduplicação externa nem validação do modelo.",
+        "unique_rows_passing_basic_checks": 0,
+        "target_definition": "asking_price_brl at listing_captured_at; advertised price only",
+        "counts": {
+          "duplicate_listing_id_groups": 0,
+          "possible_duplicate_content_groups": 0,
+          "unique_listing_ids": 0,
+          "unique_rows_passing_basic_checks": 0
+        },
+        "errors": [],
+        "warnings": [],
+        "limitations": [
+          "Checks do not prove source license, truthfulness, or property-unit identity.",
+          "Rows passing checks are not automatically suitable for model training.",
+          "A model trained on listings predicts asking prices, not sale prices or appraisals.",
+          "Training additionally needs deduplication, temporal/geographic validation, and leakage review."
+        ]
+      }
+    },
+    {
+      "id": "provisional_join_dataset",
+      "name": "Dataset provisório de auditoria e integração",
+      "path": "dados/derivados/avm_dataset_provisorio.csv",
+      "data_kind": "audit_join",
+      "target": "nenhum rótulo de avaliação preenchido",
+      "unit_of_analysis": "registro enriquecido associado a linha ITBI",
+      "allowed_use": "rastreabilidade, conferência e revisão de atributos",
+      "training_role": "blocked",
+      "limitations": [
+        "A elegibilidade de treino é false; não converter valores fiscais em avaliação.",
+        "Atributos enriquecidos não validados permanecem apenas para investigação."
+      ],
+      "exists": true,
+      "size_bytes": 6100776,
+      "sha256": "9e557517edf1addf63d0b6a84e43aeb46e8287ded7b499ea8ca260c5aa424b10",
+      "csv_data_rows": 9660,
+      "record_count": 9660
+    },
+    {
+      "id": "experimental_itbi_profile",
+      "name": "Perfil do comparador experimental ITBI",
+      "path": "models/itbi_reference_2026.json",
+      "data_kind": "derived_transaction_reference",
+      "target": "transação declarada ITBI",
+      "unit_of_analysis": "perfil agregado de transações comparáveis",
+      "allowed_use": "referência exploratória e backtest temporal ITBI",
+      "training_role": "not_an_appraisal_model",
+      "limitations": [
+        "Backtest contra transações ITBI não mede erro de avaliações.",
+        "Faixa P10-P90 observada não é intervalo de confiança individual."
+      ],
+      "exists": true,
+      "size_bytes": 1023603,
+      "sha256": "633887b90d3ef2241996476ec6ff926f2c51da4c7e1a3428efccb383a5315a51",
+      "csv_data_rows": null,
+      "record_count": 42826,
+      "reference_period": {
+        "start": "2026-01-02",
+        "end": "2026-09-07",
+        "transactions": 42826
+      },
+      "temporal_backtest": {
+        "method": "Treino janeiro-junho de 2026; teste julho-setembro de 2026; transações do mesmo SQL no treino foram excluídas do teste.",
+        "training_transactions": 31222,
+        "test_transactions": 11394,
+        "mae_brl": 254020.79,
+        "median_absolute_percentage_error": 0.236348,
+        "p90_absolute_percentage_error": 0.705847,
+        "r2": 0.553255,
+        "p10_p90_range_coverage": 0.804283,
+        "test_scope_counts": {
+          "iptu_pattern_citywide": 8344,
+          "cep_prefix5_and_iptu_pattern": 3050
+        },
+        "warning": "Validação temporal retrospectiva na mesma base municipal, sem equivaler a validação independente de avaliação CAIXA."
+      }
+    },
+    {
+      "id": "experimental_itbi_transaction_model",
+      "name": "Experimento de modelo para transações ITBI",
+      "path": "models/itbi_transaction_experiment.json",
+      "data_kind": "experimental_declared_transaction_model",
+      "target": "Valor declarado pelo contribuinte em transação ITBI",
+      "unit_of_analysis": "transação residencial elegível",
+      "allowed_use": "benchmark técnico experimental contra transações ITBI",
+      "training_role": "not_a_CAIXA_appraisal_model_or_operational_predictor",
+      "limitations": [
+        "As métricas avaliam somente a previsão de valor declarado ITBI.",
+        "O holdout temporal não é validação independente de avaliações de mercado.",
+        "O artefato não habilita treinamento de avaliação nem endpoints operacionais."
+      ],
+      "exists": true,
+      "size_bytes": 359641,
+      "sha256": "8def0b4e1b98dfbd9113fb197b8e45de739a7b41f419bfd9679a78fac4541fa4",
+      "csv_data_rows": null,
+      "record_count": null,
+      "status": "experimental_itbi_transaction_only_not_an_appraisal",
+      "model_id": "itbi-declared-transaction-median-cep-pattern-v1",
+      "experiment_version": 1,
+      "training_policy": {
+        "record_filters": {
+          "transactions_in_reference_year": 45043,
+          "excluded_inactive_sql": 74,
+          "excluded_invalid_price_or_area": 39,
+          "excluded_partial_transfer": 2058,
+          "qualified_before_ambiguous_exclusion": 42872,
+          "ambiguous_rows_excluded": 46,
+          "unique_eligible_transactions": 42826
+        },
+        "training_rows": 31222,
+        "training_period": {
+          "start": "2026-01-02",
+          "end": "2026-06-30"
+        },
+        "test_rows": 11394,
+        "test_period": {
+          "start": "2026-07-01",
+          "end": "2026-09-07"
+        },
+        "test_rows_excluded_for_sql_seen_in_training": 210,
+        "minimum_comparables_per_segment": 30,
+        "test_data_used_for_training": false
+      },
+      "estimators": {
+        "global_median": {
+          "description": "Mediana global do valor declarado por m².",
+          "test_metrics": {
+            "mae_brl": 291235.72,
+            "rmse_brl": 807708.08,
+            "mape_percent": 7134098.6401,
+            "smape_percent": 36.2297,
+            "wape_percent": 39.7631,
+            "median_absolute_percentage_error_percent": 29.0909,
+            "p90_absolute_percentage_error_percent": 78.3333,
+            "r2": 0.420393
+          },
+          "test_scope_counts": {
+            "citywide": 11394
+          }
+        },
+        "pattern_median": {
+          "description": "Mediana por código de padrão IPTU; fallback para mediana municipal.",
+          "test_metrics": {
+            "mae_brl": 269748.75,
+            "rmse_brl": 715518.06,
+            "mape_percent": 7011723.3695,
+            "smape_percent": 34.2232,
+            "wape_percent": 36.8295,
+            "median_absolute_percentage_error_percent": 27.2096,
+            "p90_absolute_percentage_error_percent": 74.1172,
+            "r2": 0.545152
+          },
+          "test_scope_counts": {
+            "iptu_pattern": 11394
+          }
+        },
+        "cep_pattern_median": {
+          "description": "Mediana por prefixo de CEP + código de padrão IPTU; fallback por padrão IPTU e depois municipal.",
+          "test_metrics": {
+            "mae_brl": 254020.79,
+            "rmse_brl": 709116.01,
+            "mape_percent": 7089142.3713,
+            "smape_percent": 30.9587,
+            "wape_percent": 34.6821,
+            "median_absolute_percentage_error_percent": 23.6348,
+            "p90_absolute_percentage_error_percent": 70.5847,
+            "r2": 0.553255
+          },
+          "test_scope_counts": {
+            "cep_prefix5_and_iptu_pattern": 3050,
+            "iptu_pattern_fallback": 8344
+          }
+        }
+      },
+      "target_quality": {
+        "training": {
+          "min_brl": 0.01,
+          "p01_brl": 21000.0,
+          "median_brl": 442394.64,
+          "max_brl": 46300000.0,
+          "below_1000_brl_count": 105,
+          "below_1000_brl_share_percent": 0.3363,
+          "one_cent_value_count": 60
+        },
+        "test": {
+          "min_brl": 0.01,
+          "p01_brl": 65077.89,
+          "median_brl": 440000.0,
+          "max_brl": 26600000.0,
+          "below_1000_brl_count": 32,
+          "below_1000_brl_share_percent": 0.2808,
+          "one_cent_value_count": 15
+        },
+        "note": "Valores positivos muito baixos foram mantidos por não haver regra documentada que autorize excluí-los. MAPE é extremamente sensível a esses denominadores; revisar os casos com a fonte antes de qualquer decisão de uso."
+      }
+    },
+    {
+      "id": "legacy_simulated_data",
+      "name": "Dados legados derivados",
+      "path": "dados/dados_sp_ref.csv",
+      "data_kind": "legacy_derived",
+      "target": "preço legado sem proveniência adequada",
+      "unit_of_analysis": "registro sintético/derivado legado",
+      "allowed_use": "quarentena e referência de auditoria histórica apenas",
+      "training_role": "prohibited",
+      "limitations": [
+        "Atributos foram inferidos por área e o campo de área foi selecionado incorretamente no pipeline antigo.",
+        "Não usar para treino, validação ou apresentação de métricas."
+      ],
+      "exists": true,
+      "size_bytes": 1093594,
+      "sha256": "17a39531dabd5752727f00762af293f959fd530688da8203784a5771efb86c40",
+      "csv_data_rows": 12151,
+      "record_count": 12151
+    },
+    {
+      "id": "ibape_reference",
+      "name": "Referência técnica IUP/IBAPE",
+      "path": "dados/Padrão Construtivo - FOTOS e características das Edificações - IBAPE SP .pdf",
+      "data_kind": "technical_reference",
+      "target": null,
+      "unit_of_analysis": "documento técnico",
+      "allowed_use": "consulta metodológica dentro do escopo documentado",
+      "training_role": "not_a_data_source",
+      "limitations": [
+        "Documento metodológico não contém rótulos de avaliação desta amostra.",
+        "Adequação e autorização de uso no método final devem ser avaliadas pelos responsáveis técnicos."
+      ],
+      "exists": true,
+      "size_bytes": 3662656,
+      "sha256": "81ad6ea0a84941ebfc3084d4bd78a778c7a741b95ff9b692be155fa5875ad032",
+      "csv_data_rows": null,
+      "record_count": null
+    }
+  ],
+  "governance": {
+    "target_selected": "market appraisal value",
+    "do_not_mix": [
+      "appraisal",
+      "ITBI_declared_transaction",
+      "asking_price_offer",
+      "tax_reference_or_tax_base"
+    ],
+    "training_release": "Requires evidence/legal review, expert review, representativeness, independent validation, operational feature compatibility, and a separate approval. No dataset is released automatically."
+  }
+}
