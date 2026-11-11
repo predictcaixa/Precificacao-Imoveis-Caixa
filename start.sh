@@ -46,10 +46,10 @@ fi
 echo -e "${YELLOW}[4/4] Iniciando API FastAPI...${NC}"
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║  API REST:   http://localhost:8000           ║${NC}"
-echo -e "${GREEN}║  Swagger UI: http://localhost:8000/docs      ║${NC}"
+echo -e "${GREEN}║  API REST:   http://localhost:8001           ║${NC}"
+echo -e "${GREEN}║  Swagger UI: http://localhost:8001/docs      ║${NC}"
 echo -e "${GREEN}║  Frontend:   abrir frontend/index.html       ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
 
-uvicorn app.main:app --reload --port 8000 --host 0.0.0.0
+uvicorn app.main:app --reload --port 8001 --host 0.0.0.0

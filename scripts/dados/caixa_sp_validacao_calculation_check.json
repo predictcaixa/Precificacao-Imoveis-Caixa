@@ -1,0 +1,620 @@
+{
+  "status": "passed",
+  "source_file": "caixa_sp_validacao.csv",
+  "source_sha256": "024da9a34e9803007458f546b8fb1101d1a7a64b9bef9cba31a6418f4a6eaf7c",
+  "audit_file": "caixa_sp_validacao_audit.json",
+  "rows_checked": 480,
+  "eligible_records_checked": 478,
+  "checks_passed": 100,
+  "checks_failed": 0,
+  "checks": [
+    {
+      "check": "source_row_count",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "spatial_candidate_count",
+      "passed": true,
+      "expected": 478,
+      "reported": 478
+    },
+    {
+      "check": "target_positive_count",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "target_min_brl",
+      "passed": true,
+      "expected": 136179.75,
+      "reported": 136179.75
+    },
+    {
+      "check": "target_median_brl",
+      "passed": true,
+      "expected": 233836.5,
+      "reported": 233836.5
+    },
+    {
+      "check": "target_max_brl",
+      "passed": true,
+      "expected": 3020000.0,
+      "reported": 3020000.0
+    },
+    {
+      "check": "spatial_rows_evaluated",
+      "passed": true,
+      "expected": 478,
+      "reported": 478
+    },
+    {
+      "check": "spatial_neighborhood_count",
+      "passed": true,
+      "expected": 186,
+      "reported": 186
+    },
+    {
+      "check": "spatial_fold_count",
+      "passed": true,
+      "expected": 5,
+      "reported": 5
+    },
+    {
+      "check": "fold_1_training_rows",
+      "passed": true,
+      "expected": 382,
+      "reported": 382
+    },
+    {
+      "check": "fold_1_test_rows",
+      "passed": true,
+      "expected": 96,
+      "reported": 96
+    },
+    {
+      "check": "fold_1_training_neighborhoods",
+      "passed": true,
+      "expected": 153,
+      "reported": 153
+    },
+    {
+      "check": "fold_1_test_neighborhoods",
+      "passed": true,
+      "expected": 33,
+      "reported": 33
+    },
+    {
+      "check": "fold_1_neighborhood_overlap",
+      "passed": true,
+      "expected": false,
+      "reported": false
+    },
+    {
+      "check": "fold_2_training_rows",
+      "passed": true,
+      "expected": 382,
+      "reported": 382
+    },
+    {
+      "check": "fold_2_test_rows",
+      "passed": true,
+      "expected": 96,
+      "reported": 96
+    },
+    {
+      "check": "fold_2_training_neighborhoods",
+      "passed": true,
+      "expected": 148,
+      "reported": 148
+    },
+    {
+      "check": "fold_2_test_neighborhoods",
+      "passed": true,
+      "expected": 38,
+      "reported": 38
+    },
+    {
+      "check": "fold_2_neighborhood_overlap",
+      "passed": true,
+      "expected": false,
+      "reported": false
+    },
+    {
+      "check": "fold_3_training_rows",
+      "passed": true,
+      "expected": 382,
+      "reported": 382
+    },
+    {
+      "check": "fold_3_test_rows",
+      "passed": true,
+      "expected": 96,
+      "reported": 96
+    },
+    {
+      "check": "fold_3_training_neighborhoods",
+      "passed": true,
+      "expected": 147,
+      "reported": 147
+    },
+    {
+      "check": "fold_3_test_neighborhoods",
+      "passed": true,
+      "expected": 39,
+      "reported": 39
+    },
+    {
+      "check": "fold_3_neighborhood_overlap",
+      "passed": true,
+      "expected": false,
+      "reported": false
+    },
+    {
+      "check": "fold_4_training_rows",
+      "passed": true,
+      "expected": 383,
+      "reported": 383
+    },
+    {
+      "check": "fold_4_test_rows",
+      "passed": true,
+      "expected": 95,
+      "reported": 95
+    },
+    {
+      "check": "fold_4_training_neighborhoods",
+      "passed": true,
+      "expected": 148,
+      "reported": 148
+    },
+    {
+      "check": "fold_4_test_neighborhoods",
+      "passed": true,
+      "expected": 38,
+      "reported": 38
+    },
+    {
+      "check": "fold_4_neighborhood_overlap",
+      "passed": true,
+      "expected": false,
+      "reported": false
+    },
+    {
+      "check": "fold_5_training_rows",
+      "passed": true,
+      "expected": 383,
+      "reported": 383
+    },
+    {
+      "check": "fold_5_test_rows",
+      "passed": true,
+      "expected": 95,
+      "reported": 95
+    },
+    {
+      "check": "fold_5_training_neighborhoods",
+      "passed": true,
+      "expected": 148,
+      "reported": 148
+    },
+    {
+      "check": "fold_5_test_neighborhoods",
+      "passed": true,
+      "expected": 38,
+      "reported": 38
+    },
+    {
+      "check": "fold_5_neighborhood_overlap",
+      "passed": true,
+      "expected": false,
+      "reported": false
+    },
+    {
+      "check": "spatial_training_citywide_median_mae_brl",
+      "passed": true,
+      "expected": 90699.93,
+      "reported": 90699.93
+    },
+    {
+      "check": "spatial_training_citywide_median_rmse_brl",
+      "passed": true,
+      "expected": 290393.51,
+      "reported": 290393.51
+    },
+    {
+      "check": "spatial_training_citywide_median_median_absolute_percentage_error_percent",
+      "passed": true,
+      "expected": 12.9603,
+      "reported": 12.9603
+    },
+    {
+      "check": "spatial_training_citywide_median_p90_absolute_percentage_error_percent",
+      "passed": true,
+      "expected": 39.9367,
+      "reported": 39.9367
+    },
+    {
+      "check": "spatial_training_citywide_median_wape_percent",
+      "passed": true,
+      "expected": 30.6025,
+      "reported": 30.6025
+    },
+    {
+      "check": "spatial_training_citywide_median_smape_percent",
+      "passed": true,
+      "expected": 20.9652,
+      "reported": 20.9652
+    },
+    {
+      "check": "spatial_training_citywide_median_r2",
+      "passed": true,
+      "expected": -0.051152,
+      "reported": -0.051152
+    },
+    {
+      "check": "spatial_training_median_per_m2_times_private_area_mae_brl",
+      "passed": true,
+      "expected": 65791.72,
+      "reported": 65791.72
+    },
+    {
+      "check": "spatial_training_median_per_m2_times_private_area_rmse_brl",
+      "passed": true,
+      "expected": 154607.73,
+      "reported": 154607.73
+    },
+    {
+      "check": "spatial_training_median_per_m2_times_private_area_median_absolute_percentage_error_percent",
+      "passed": true,
+      "expected": 14.7628,
+      "reported": 14.7628
+    },
+    {
+      "check": "spatial_training_median_per_m2_times_private_area_p90_absolute_percentage_error_percent",
+      "passed": true,
+      "expected": 39.6562,
+      "reported": 39.6562
+    },
+    {
+      "check": "spatial_training_median_per_m2_times_private_area_wape_percent",
+      "passed": true,
+      "expected": 22.1984,
+      "reported": 22.1984
+    },
+    {
+      "check": "spatial_training_median_per_m2_times_private_area_smape_percent",
+      "passed": true,
+      "expected": 18.7928,
+      "reported": 18.7928
+    },
+    {
+      "check": "spatial_training_median_per_m2_times_private_area_r2",
+      "passed": true,
+      "expected": 0.702043,
+      "reported": 0.702043
+    },
+    {
+      "check": "feature_complete_case_count",
+      "passed": true,
+      "expected": 92,
+      "reported": 92
+    },
+    {
+      "check": "feature_fallback_count",
+      "passed": true,
+      "expected": 24,
+      "reported": 24
+    },
+    {
+      "check": "feature_baseline_area_rate_mae_brl",
+      "passed": true,
+      "expected": 116770.56,
+      "reported": 116770.56
+    },
+    {
+      "check": "feature_baseline_area_rate_rmse_brl",
+      "passed": true,
+      "expected": 222940.82,
+      "reported": 222940.82
+    },
+    {
+      "check": "feature_baseline_area_rate_median_absolute_percentage_error_percent",
+      "passed": true,
+      "expected": 18.7981,
+      "reported": 18.7981
+    },
+    {
+      "check": "feature_baseline_area_rate_p90_absolute_percentage_error_percent",
+      "passed": true,
+      "expected": 39.2753,
+      "reported": 39.2753
+    },
+    {
+      "check": "feature_baseline_area_rate_wape_percent",
+      "passed": true,
+      "expected": 25.5975,
+      "reported": 25.5975
+    },
+    {
+      "check": "feature_baseline_area_rate_smape_percent",
+      "passed": true,
+      "expected": 21.5614,
+      "reported": 21.5614
+    },
+    {
+      "check": "feature_baseline_area_rate_r2",
+      "passed": true,
+      "expected": 0.773779,
+      "reported": 0.773779
+    },
+    {
+      "check": "feature_area_bedrooms_parking_groups_mae_brl",
+      "passed": true,
+      "expected": 113304.77,
+      "reported": 113304.77
+    },
+    {
+      "check": "feature_area_bedrooms_parking_groups_rmse_brl",
+      "passed": true,
+      "expected": 222925.71,
+      "reported": 222925.71
+    },
+    {
+      "check": "feature_area_bedrooms_parking_groups_median_absolute_percentage_error_percent",
+      "passed": true,
+      "expected": 16.9134,
+      "reported": 16.9134
+    },
+    {
+      "check": "feature_area_bedrooms_parking_groups_p90_absolute_percentage_error_percent",
+      "passed": true,
+      "expected": 41.5556,
+      "reported": 41.5556
+    },
+    {
+      "check": "feature_area_bedrooms_parking_groups_wape_percent",
+      "passed": true,
+      "expected": 24.8377,
+      "reported": 24.8377
+    },
+    {
+      "check": "feature_area_bedrooms_parking_groups_smape_percent",
+      "passed": true,
+      "expected": 20.2773,
+      "reported": 20.2773
+    },
+    {
+      "check": "feature_area_bedrooms_parking_groups_r2",
+      "passed": true,
+      "expected": 0.773809,
+      "reported": 0.773809
+    },
+    {
+      "check": "independent_bedrooms_count",
+      "passed": true,
+      "expected": 406,
+      "reported": 406
+    },
+    {
+      "check": "independent_parking_count",
+      "passed": true,
+      "expected": 107,
+      "reported": 107
+    },
+    {
+      "check": "bedroom_coverage_percent",
+      "passed": true,
+      "expected": 84.58,
+      "reported": 84.58
+    },
+    {
+      "check": "parking_coverage_percent",
+      "passed": true,
+      "expected": 22.29,
+      "reported": 22.29
+    },
+    {
+      "check": "target_per_m2_match_count",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "target_per_m2_checked_rows",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "appraisal_date_coverage_count",
+      "passed": true,
+      "expected": 0,
+      "reported": 0
+    },
+    {
+      "check": "appraisal_date_coverage_percent",
+      "passed": true,
+      "expected": 0.0,
+      "reported": 0.0
+    },
+    {
+      "check": "collection_date_distinct_count",
+      "passed": true,
+      "expected": 1,
+      "reported": 1
+    },
+    {
+      "check": "appraisal_date_distinct_count",
+      "passed": true,
+      "expected": 0,
+      "reported": 0
+    },
+    {
+      "check": "unique_property_id_count",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "duplicate_property_id_group_count",
+      "passed": true,
+      "expected": 0,
+      "reported": 0
+    },
+    {
+      "check": "quality_count_property_type_apartamento",
+      "passed": true,
+      "expected": 479,
+      "reported": 479
+    },
+    {
+      "check": "quality_count_property_type_sala",
+      "passed": true,
+      "expected": 1,
+      "reported": 1
+    },
+    {
+      "check": "quality_count_target_nature_avaliacao_caixa_imovel_retomado",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "quality_count_source_caixa_lista_imoveis_oficial",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "quality_count_area_type_privativa",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "quality_count_valid_collection_date",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "quality_count_valid_appraisal_date",
+      "passed": true,
+      "expected": 0,
+      "reported": 0
+    },
+    {
+      "check": "excluded_spatial_candidate_count",
+      "passed": true,
+      "expected": 2,
+      "reported": 2
+    },
+    {
+      "check": "candidate_exclusion_reasons",
+      "passed": true,
+      "expected": {
+        "area_missing_or_out_of_range": 1,
+        "unsupported_property_type": 1
+      },
+      "reported": {
+        "area_missing_or_out_of_range": 1,
+        "unsupported_property_type": 1
+      }
+    },
+    {
+      "check": "area_coverage_candidate_rows",
+      "passed": true,
+      "expected": 478,
+      "reported": 478
+    },
+    {
+      "check": "attribute_inventory_quartos",
+      "passed": true,
+      "expected": 406,
+      "reported": 406
+    },
+    {
+      "check": "attribute_inventory_vagas",
+      "passed": true,
+      "expected": 107,
+      "reported": 107
+    },
+    {
+      "check": "attribute_inventory_avaliacao_data",
+      "passed": true,
+      "expected": 0,
+      "reported": 0
+    },
+    {
+      "check": "feature_complete_case_coverage_percent",
+      "passed": true,
+      "expected": 19.25,
+      "reported": 19.25
+    },
+    {
+      "check": "temporal_dated_candidate_count",
+      "passed": true,
+      "expected": 0,
+      "reported": 0
+    },
+    {
+      "check": "temporal_distinct_appraisal_dates",
+      "passed": true,
+      "expected": 0,
+      "reported": 0
+    },
+    {
+      "check": "source_collection_date_coverage",
+      "passed": true,
+      "expected": 480,
+      "reported": 480
+    },
+    {
+      "check": "source_appraisal_date_coverage",
+      "passed": true,
+      "expected": 0,
+      "reported": 0
+    },
+    {
+      "check": "temporal_validation_blocked_without_dates",
+      "passed": true,
+      "expected": true,
+      "reported": true
+    },
+    {
+      "check": "operational_prediction_remains_blocked",
+      "passed": true,
+      "expected": false,
+      "reported": false
+    },
+    {
+      "check": "audit_sha256_matches_source",
+      "passed": true,
+      "expected": "024da9a34e9803007458f546b8fb1101d1a7a64b9bef9cba31a6418f4a6eaf7c",
+      "reported": "024da9a34e9803007458f546b8fb1101d1a7a64b9bef9cba31a6418f4a6eaf7c"
+    },
+    {
+      "check": "simulation_hand_example_mae",
+      "passed": true,
+      "expected": 10,
+      "reported": 10.0
+    },
+    {
+      "check": "simulation_hand_example_wape",
+      "passed": true,
+      "expected": 5,
+      "reported": 5.0
+    },
+    {
+      "check": "simulation_hand_example_r2",
+      "passed": true,
+      "expected": 0.975,
+      "reported": 0.975
+    }
+  ],
+  "privacy": "No property IDs, addresses, URLs, SQLs, or row-level outputs are included.",
+  "methodology": "Recomputed counts, target aggregates, coverage, target-per-area arithmetic, spatial folds and their metrics, feature comparison and temporal gating from the raw CSV with an independent reference implementation. The hand simulation uses y=[100,200,300], predictions=[90,220,300]."
+}

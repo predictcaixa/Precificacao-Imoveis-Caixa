@@ -1,0 +1,213 @@
+{
+  "audit_version": 1,
+  "reference_year_for_age_check": 2026,
+  "inputs": {
+    "official_workbook": "1. APARTAMENTOS.xlsx",
+    "official_rows": 45103,
+    "enriched_workbook": "22.10.2026.xlsx",
+    "enriched_rows": 9660
+  },
+  "join": {
+    "key_fields": [
+      "SQL",
+      "Data de Transação",
+      "Valor de Transação (declarado pelo contribuinte)"
+    ],
+    "matched_unique_rows": 9658,
+    "matched_ambiguous_rows": 2,
+    "unmatched_rows": 0,
+    "match_rate": 1.0,
+    "duplicate_source_key_groups": 63,
+    "ambiguous_groups_with_comparable_attributes": 2,
+    "ambiguous_groups_consistent_on_compared_attributes": 2,
+    "ambiguous_groups_identical_on_all_source_fields": 2
+  },
+  "field_agreement_for_unique_matches": {
+    "sql": {
+      "comparable": 9658,
+      "equal": 9658,
+      "agreement_rate": 1.0
+    },
+    "registration": {
+      "comparable": 9658,
+      "equal": 9658,
+      "agreement_rate": 1.0
+    },
+    "declared_transaction_value": {
+      "comparable": 9658,
+      "equal": 9658,
+      "agreement_rate": 1.0
+    },
+    "reference_tax_value": {
+      "comparable": 9658,
+      "equal": 9658,
+      "agreement_rate": 1.0
+    },
+    "land_area_m2": {
+      "comparable": 9658,
+      "equal": 9658,
+      "agreement_rate": 1.0
+    },
+    "frontage_m": {
+      "comparable": 9658,
+      "equal": 9658,
+      "agreement_rate": 1.0
+    },
+    "ideal_fraction": {
+      "comparable": 9658,
+      "equal": 9658,
+      "agreement_rate": 1.0
+    },
+    "construction_year_acc": {
+      "comparable": 9658,
+      "equal": 9607,
+      "agreement_rate": 0.994719
+    },
+    "property_tax_pattern": {
+      "comparable": 9658,
+      "equal": 9633,
+      "agreement_rate": 0.997411
+    }
+  },
+  "field_presence": {
+    "official": {
+      "N° do Cadastro (SQL)": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "CEP": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "Data de Transação": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "Valor de Transação (declarado pelo contribuinte)": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "Valor Venal de Referência": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "Área do Terreno (m2)": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "Testada (m)": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "Fração Ideal": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "Área Construída (m2)": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "Uso (IPTU)": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "Padrão (IPTU)": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      },
+      "ACC (IPTU)": {
+        "nonempty": 45103,
+        "rows": 45103,
+        "rate": 1.0
+      }
+    },
+    "enriched": {
+      "N° do Cadastro (SQL)": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      },
+      "Data de Transação": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      },
+      "Valor de Transação (declarado pelo contribuinte)": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      },
+      "IDADE": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      },
+      "QUARTOS": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      },
+      "BANHEIROS": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      },
+      "VAGAS": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      },
+      "ELEVADOR": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      },
+      "Área total": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      },
+      "ÁREA PRIVATIVA (m²)": {
+        "nonempty": 9660,
+        "rows": 9660,
+        "rate": 1.0
+      }
+    }
+  },
+  "derived_field_checks": {
+    "age_equals_reference_year_minus_acc": {
+      "comparable": 9660,
+      "equal": 9660,
+      "agreement_rate": 1.0,
+      "interpretation": "Confirma consistência aritmética, não comprova a semântica de ACC nem a data de referência adotada na origem."
+    },
+    "private_area_not_greater_than_total": {
+      "comparable": 9660,
+      "passes": 9571,
+      "pass_rate": 0.990787
+    }
+  },
+  "transaction_date_range": {
+    "enriched_min": "2026-01-02",
+    "enriched_max": "2026-09-07",
+    "official_min": "2007-01-24",
+    "official_max": "2026-09-07"
+  },
+  "limitations": [
+    "Chave composta idêntica comprova vínculo com um registro ITBI, não a conclusão ou representatividade de mercado da transação.",
+    "A concordância entre planilhas não comprova a origem de quartos, banheiros, vagas, elevador ou áreas privativas.",
+    "Grupos com chave duplicada permanecem ambíguos e não devem ser deduplicados automaticamente.",
+    "ACC, área construída, área total e área privativa não são conceitos intercambiáveis."
+  ]
+}

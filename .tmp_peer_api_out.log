@@ -1,0 +1,5 @@
+INFO:     127.0.0.1:64339 - "GET /modelo/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56200 - "POST /avm/imports HTTP/1.1" 201 Created
+INFO:     127.0.0.1:56201 - "POST /predict/batch?modelo=catboost HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56202 - "POST /avm/imports/de9d6c44-86c9-405c-9d01-7e7797c37d61/rows HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56203 - "PATCH /avm/imports/de9d6c44-86c9-405c-9d01-7e7797c37d61 HTTP/1.1" 200 OK

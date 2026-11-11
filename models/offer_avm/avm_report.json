@@ -1,0 +1,677 @@
+{
+  "status": "experimental_not_operationally_approved",
+  "generated_at_utc": "2026-11-01T14:30:43.731851+00:00",
+  "source_file": "30.10.2026.xlsx",
+  "source_sha256": "a0a928cee9a24d6943091294942c44d45cbfbbc45a312d69e883033bccba88d4",
+  "random_state": 42,
+  "runtime_versions": {
+    "python": "3.13.16",
+    "catboost": "1.2.10",
+    "xgboost": "3.4.1",
+    "pandas": "3.1.0",
+    "scikit_learn": "1.9.1"
+  },
+  "model_status": {
+    "random_forest": "trained",
+    "catboost": "trained",
+    "xgboost": "trained"
+  },
+  "catboost_status": "trained",
+  "xgboost_status": "trained",
+  "target_definition": "0,90*OFERTA; 90% of asking price as a proxy, not a verified sale price or CAIXA appraisal",
+  "discount_rate": 0.1,
+  "region_discount_status": "Uniform 10% target in source workbook; the Região column is empty, so region-specific rates were not inferred.",
+  "feature_columns": [
+    "LATITUDE",
+    "LONGITUDE",
+    "IDADE",
+    "QUARTOS",
+    "BANHEIROS",
+    "VAGAS",
+    "ELEVADOR",
+    "RENDA MEDIANA IBGE 2022 (R$)",
+    "RENDA MÉDIA IBGE 2022 (R$)",
+    "Área total",
+    "AREA PRIV.",
+    "CEP",
+    "Região",
+    "Distrito",
+    "SETOR CENSITÁRIO 2022",
+    "Padrão (IPTU)"
+  ],
+  "excluded_price_and_identifier_columns": [
+    "VALOR OFERTA",
+    "0,90*OFERTA",
+    "VT BASE",
+    "VU BASE",
+    "Valor Venal",
+    "Valor Declarado",
+    "Valor ITBI.",
+    "LINK",
+    "%",
+    "BASE",
+    "(SQL)",
+    "Matrícula do Imóvel_Cartório de Registro",
+    "Endereço",
+    "Nº",
+    "Complemento",
+    "COND",
+    "Data de Transação",
+    "DT",
+    "ACC (IPTU)",
+    "ARQUIVO_ORIGEM"
+  ],
+  "split_method": "60/20/20 approximately by distinct Distrito groups; validation selected the model and parameters; independent geographic test was not used for selection",
+  "official_region_validation": "available; independent_test_metrics_reported",
+  "geographic_validation_by_region": {
+    "Centro": {
+      "n": 258,
+      "r2": 0.691170989927334,
+      "rmse_brl": 167209.35753964476,
+      "mae_brl": 110799.90261627907,
+      "mape_percent": 18.325493537833655,
+      "bias_brl": 41124.70373062015
+    },
+    "Zona Leste": {
+      "n": 629,
+      "r2": 0.7932899484456503,
+      "rmse_brl": 212447.7417326231,
+      "mae_brl": 114044.755395469,
+      "mape_percent": 15.462919157927914,
+      "bias_brl": -19922.695518680444
+    },
+    "Zona Leste²": {
+      "n": 191,
+      "r2": 0.5571750618090814,
+      "rmse_brl": 55444.65915923528,
+      "mae_brl": 38408.105595549736,
+      "mape_percent": 12.549022411343152,
+      "bias_brl": -21245.029024869113
+    },
+    "Zona Norte": {
+      "n": 168,
+      "r2": 0.6951022665040889,
+      "rmse_brl": 206398.8644556614,
+      "mae_brl": 146038.32412574405,
+      "mape_percent": 21.77037046298043,
+      "bias_brl": -81679.25455729167
+    },
+    "Zona Oeste": {
+      "n": 258,
+      "r2": 0.5749469369119218,
+      "rmse_brl": 257081.03027848326,
+      "mae_brl": 152902.1452761628,
+      "mape_percent": 17.20820066395123,
+      "bias_brl": -43007.89106104652
+    },
+    "Zona Sul": {
+      "n": 384,
+      "r2": 0.44145218638804173,
+      "rmse_brl": 498370.5751070603,
+      "mae_brl": 368920.9206542969,
+      "mape_percent": 23.7051778089556,
+      "bias_brl": -334256.3828938802
+    }
+  },
+  "geographic_validation_by_district": {
+    "Bom Retiro / Barra Funda": {
+      "n": 258,
+      "r2": 0.691170989927334,
+      "rmse_brl": 167209.35753964476,
+      "mae_brl": 110799.90261627907,
+      "mape_percent": 18.325493537833655,
+      "bias_brl": 41124.70373062015
+    },
+    "Brás / Pari / Belém": {
+      "n": 629,
+      "r2": 0.7932899484456503,
+      "rmse_brl": 212447.7417326231,
+      "mae_brl": 114044.755395469,
+      "mape_percent": 15.462919157927914,
+      "bias_brl": -19922.695518680444
+    },
+    "Butantã / Raposo Tavares": {
+      "n": 126,
+      "r2": 0.57193624881598,
+      "rmse_brl": 172748.86236855242,
+      "mae_brl": 112288.9941468254,
+      "mape_percent": 14.294261787034547,
+      "bias_brl": 28395.857242063485
+    },
+    "Itaim Bibi": {
+      "n": 379,
+      "r2": 0.42724325849309686,
+      "rmse_brl": 501310.982111965,
+      "mae_brl": 371678.72716029023,
+      "mape_percent": 23.548255245094424,
+      "bias_brl": -340775.3218172823
+    },
+    "Santana": {
+      "n": 168,
+      "r2": 0.6951022665040889,
+      "rmse_brl": 206398.8644556614,
+      "mae_brl": 146038.32412574405,
+      "mape_percent": 21.77037046298043,
+      "bias_brl": -81679.25455729167
+    },
+    "Socorro / Cidade Dutra / Grajaú": {
+      "n": 5,
+      "r2": 0.0,
+      "rmse_brl": 159879.1875,
+      "mae_brl": 159879.1875,
+      "mape_percent": 35.5999081496326,
+      "bias_brl": 159879.1875
+    },
+    "São Miguel Paulista / Vila Jacuí": {
+      "n": 191,
+      "r2": 0.5571750618090814,
+      "rmse_brl": 55444.65915923528,
+      "mae_brl": 38408.105595549736,
+      "mape_percent": 12.549022411343152,
+      "bias_brl": -21245.029024869113
+    },
+    "Vila Leopoldina / Jaguaré / Rio Pequeno": {
+      "n": 132,
+      "r2": 0.571397211441983,
+      "rmse_brl": 317319.21518092114,
+      "mae_brl": 191669.2440814394,
+      "mape_percent": 19.98968777373534,
+      "bias_brl": -111166.01444128787
+    }
+  },
+  "partition_counts": {
+    "train": 5668,
+    "validation": 2032,
+    "independent_geographic_test": 1888
+  },
+  "inference_rows": 11055,
+  "rows_outside_prediction_scope": 1707,
+  "partition_district_counts": {
+    "train": 27,
+    "validation": 10,
+    "independent_geographic_test": 8
+  },
+  "validation_candidates": [
+    {
+      "name": "catboost_depth_4",
+      "kind": "catboost",
+      "parameters": {
+        "depth": 4,
+        "learning_rate": 0.05,
+        "iterations": 500
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.822633244445391,
+        "rmse_brl": 181879.56865480868,
+        "mae_brl": 117379.7135979367,
+        "mape_percent": 19.77351627955271,
+        "bias_brl": 7622.299699498597
+      }
+    },
+    {
+      "name": "catboost_depth_6",
+      "kind": "catboost",
+      "parameters": {
+        "depth": 6,
+        "learning_rate": 0.05,
+        "iterations": 500
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.807548649083248,
+        "rmse_brl": 189455.96634659596,
+        "mae_brl": 119955.21641364375,
+        "mape_percent": 19.626883624344345,
+        "bias_brl": 5285.475151946665
+      }
+    },
+    {
+      "name": "catboost_depth_8",
+      "kind": "catboost",
+      "parameters": {
+        "depth": 8,
+        "learning_rate": 0.05,
+        "iterations": 500
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.7647826687399231,
+        "rmse_brl": 209451.01232558623,
+        "mae_brl": 129441.27455121925,
+        "mape_percent": 21.1236604754733,
+        "bias_brl": -12561.048170826316
+      }
+    },
+    {
+      "name": "xgboost_depth_4",
+      "kind": "xgboost",
+      "parameters": {
+        "max_depth": 4,
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1.0
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.8393415360156752,
+        "rmse_brl": 173101.01318420656,
+        "mae_brl": 113897.79936177412,
+        "mape_percent": 19.258963092017684,
+        "bias_brl": 6048.505322650099
+      }
+    },
+    {
+      "name": "xgboost_depth_6",
+      "kind": "xgboost",
+      "parameters": {
+        "max_depth": 6,
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1.0
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.8398613846564853,
+        "rmse_brl": 172820.7315381681,
+        "mae_brl": 113727.30293737697,
+        "mape_percent": 19.23432418026811,
+        "bias_brl": 9439.17297613189
+      }
+    },
+    {
+      "name": "xgboost_depth_8",
+      "kind": "xgboost",
+      "parameters": {
+        "max_depth": 8,
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1.0
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.8363077289057063,
+        "rmse_brl": 174727.75293037534,
+        "mae_brl": 115414.84324095718,
+        "mape_percent": 19.543645051191415,
+        "bias_brl": 16991.04281649852
+      }
+    },
+    {
+      "name": "random_forest",
+      "kind": "random_forest",
+      "parameters": {
+        "n_estimators": 300,
+        "max_features": 0.8,
+        "min_samples_leaf": 3
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.8077618245169206,
+        "rmse_brl": 189351.00852762163,
+        "mae_brl": 129986.64178857693,
+        "mape_percent": 22.47821553822364,
+        "bias_brl": 46987.58526633879
+      }
+    }
+  ],
+  "validation_metrics_by_model": {
+    "catboost": {
+      "candidate": "catboost_depth_4",
+      "parameters": {
+        "depth": 4,
+        "learning_rate": 0.05,
+        "iterations": 500
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.822633244445391,
+        "rmse_brl": 181879.56865480868,
+        "mae_brl": 117379.7135979367,
+        "mape_percent": 19.77351627955271,
+        "bias_brl": 7622.299699498597
+      },
+      "candidate_count": 3
+    },
+    "xgboost": {
+      "candidate": "xgboost_depth_6",
+      "parameters": {
+        "max_depth": 6,
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1.0
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.8398613846564853,
+        "rmse_brl": 172820.7315381681,
+        "mae_brl": 113727.30293737697,
+        "mape_percent": 19.23432418026811,
+        "bias_brl": 9439.17297613189
+      },
+      "candidate_count": 3
+    },
+    "random_forest": {
+      "candidate": "random_forest",
+      "parameters": {
+        "n_estimators": 300,
+        "max_features": 0.8,
+        "min_samples_leaf": 3
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.8077618245169206,
+        "rmse_brl": 189351.00852762163,
+        "mae_brl": 129986.64178857693,
+        "mape_percent": 22.47821553822364,
+        "bias_brl": 46987.58526633879
+      },
+      "candidate_count": 1
+    }
+  },
+  "available_models": {
+    "random_forest": {
+      "status": "trained",
+      "candidate": "random_forest",
+      "parameters": {
+        "n_estimators": 300,
+        "max_features": 0.8,
+        "min_samples_leaf": 3
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.8077618245169206,
+        "rmse_brl": 189351.00852762163,
+        "mae_brl": 129986.64178857693,
+        "mape_percent": 22.47821553822364,
+        "bias_brl": 46987.58526633879
+      },
+      "independent_geographic_test_metrics": {
+        "n": 1888,
+        "r2": 0.7378875687649911,
+        "rmse_brl": 288397.89314954594,
+        "mae_brl": 163611.1282524043,
+        "mape_percent": 18.011048031438136,
+        "bias_brl": -79596.46835940123
+      },
+      "feature_importance": {
+        "AREA PRIV.": 0.5621423815557806,
+        "RENDA MÉDIA IBGE 2022 (R$)": 0.12983603883825004,
+        "Área total": 0.10605218035761817,
+        "LONGITUDE": 0.07715449857864919,
+        "RENDA MEDIANA IBGE 2022 (R$)": 0.028112195238771866,
+        "LATITUDE": 0.02510221278888324,
+        "Distrito": 0.022108602134935405,
+        "IDADE": 0.018379990024520725,
+        "Região": 0.01015118420115371,
+        "BANHEIROS": 0.006980812222429026,
+        "Padrão (IPTU)": 0.006774677526494498,
+        "VAGAS": 0.0021793413148270668,
+        "QUARTOS": 0.0018790118732215358,
+        "CEP": 0.0018277056321132482,
+        "SETOR CENSITÁRIO 2022": 0.000712767143309423,
+        "ELEVADOR": 0.0005991117492455794,
+        "missingindicator_VAGAS": 7.288819797063537e-06,
+        "missingindicator_QUARTOS": 0.0,
+        "missingindicator_BANHEIROS": 0.0
+      },
+      "model_file": "models\\offer_avm\\offer_avm.joblib"
+    },
+    "catboost": {
+      "status": "trained",
+      "candidate": "catboost_depth_4",
+      "parameters": {
+        "depth": 4,
+        "learning_rate": 0.05,
+        "iterations": 500
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.822633244445391,
+        "rmse_brl": 181879.56865480868,
+        "mae_brl": 117379.7135979367,
+        "mape_percent": 19.77351627955271,
+        "bias_brl": 7622.299699498597
+      },
+      "independent_geographic_test_metrics": {
+        "n": 1888,
+        "r2": 0.739488903162495,
+        "rmse_brl": 287515.58286867844,
+        "mae_brl": 173895.8246806248,
+        "mape_percent": 19.54264752919063,
+        "bias_brl": -70573.01741926638
+      },
+      "feature_importance": {
+        "AREA PRIV.": 34.980917197272554,
+        "Distrito": 17.84914235956951,
+        "RENDA MÉDIA IBGE 2022 (R$)": 9.76649663350148,
+        "Área total": 8.619678390306886,
+        "LONGITUDE": 5.837550132865812,
+        "LATITUDE": 5.328041343270764,
+        "CEP": 3.4356781024082093,
+        "IDADE": 3.0705850210759027,
+        "RENDA MEDIANA IBGE 2022 (R$)": 2.743233614891654,
+        "Padrão (IPTU)": 2.3220080796799025,
+        "Região": 2.2930334519280233,
+        "BANHEIROS": 2.009375040816134,
+        "SETOR CENSITÁRIO 2022": 0.6398156701225105,
+        "VAGAS": 0.47456861205175804,
+        "QUARTOS": 0.41166561272338087,
+        "ELEVADOR": 0.21821073751552975
+      },
+      "model_file": "models\\offer_avm\\offer_avm_catboost.cbm"
+    },
+    "xgboost": {
+      "status": "trained",
+      "candidate": "xgboost_depth_6",
+      "parameters": {
+        "max_depth": 6,
+        "n_estimators": 500,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1.0
+      },
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.8398613846564853,
+        "rmse_brl": 172820.7315381681,
+        "mae_brl": 113727.30293737697,
+        "mape_percent": 19.23432418026811,
+        "bias_brl": 9439.17297613189
+      },
+      "independent_geographic_test_metrics": {
+        "n": 1888,
+        "r2": 0.7399870561076716,
+        "rmse_brl": 287240.55567845225,
+        "mae_brl": 165945.60362983315,
+        "mape_percent": 18.035457124673393,
+        "bias_brl": -84296.40050483315
+      },
+      "feature_importance": {
+        "Região": 0.2491123965010047,
+        "Distrito": 0.20643707469571382,
+        "SETOR CENSITÁRIO 2022": 0.16154411394381896,
+        "CEP": 0.10577149827440735,
+        "AREA PRIV.": 0.09305678308010101,
+        "BANHEIROS": 0.050653792917728424,
+        "Padrão (IPTU)": 0.040657198522239923,
+        "RENDA MÉDIA IBGE 2022 (R$)": 0.028033142909407616,
+        "Área total": 0.02156582474708557,
+        "LONGITUDE": 0.011134830303490162,
+        "RENDA MEDIANA IBGE 2022 (R$)": 0.009750179015100002,
+        "VAGAS": 0.0065048569813370705,
+        "IDADE": 0.0053507862612605095,
+        "LATITUDE": 0.003710848046466708,
+        "ELEVADOR": 0.003497437806800008,
+        "QUARTOS": 0.0019323298474773765,
+        "missingindicator_VAGAS": 0.0009798265527933836,
+        "missingindicator_BANHEIROS": 0.00018153483688365668,
+        "missingindicator_QUARTOS": 0.00012547944788821042
+      },
+      "model_file": "models\\offer_avm\\offer_avm_xgboost.joblib"
+    }
+  },
+  "selected_model": "xgboost_depth_6",
+  "selected_model_validation_metrics": {
+    "n": 2032,
+    "r2": 0.8398613846564853,
+    "rmse_brl": 172820.7315381681,
+    "mae_brl": 113727.30293737697,
+    "mape_percent": 19.23432418026811,
+    "bias_brl": 9439.17297613189
+  },
+  "independent_geographic_test_metrics": {
+    "n": 1888,
+    "r2": 0.7399870561076716,
+    "rmse_brl": 287240.55567845225,
+    "mae_brl": 165945.60362983315,
+    "mape_percent": 18.035457124673393,
+    "bias_brl": -84296.40050483315
+  },
+  "feature_importance": {
+    "Região": 0.2491123965010047,
+    "Distrito": 0.20643707469571382,
+    "SETOR CENSITÁRIO 2022": 0.16154411394381896,
+    "CEP": 0.10577149827440735,
+    "AREA PRIV.": 0.09305678308010101,
+    "BANHEIROS": 0.050653792917728424,
+    "Padrão (IPTU)": 0.040657198522239923,
+    "RENDA MÉDIA IBGE 2022 (R$)": 0.028033142909407616,
+    "Área total": 0.02156582474708557,
+    "LONGITUDE": 0.011134830303490162,
+    "RENDA MEDIANA IBGE 2022 (R$)": 0.009750179015100002,
+    "VAGAS": 0.0065048569813370705,
+    "IDADE": 0.0053507862612605095,
+    "LATITUDE": 0.003710848046466708,
+    "ELEVADOR": 0.003497437806800008,
+    "QUARTOS": 0.0019323298474773765,
+    "missingindicator_VAGAS": 0.0009798265527933836,
+    "missingindicator_BANHEIROS": 0.00018153483688365668,
+    "missingindicator_QUARTOS": 0.00012547944788821042
+  },
+  "outlier_analysis": {
+    "method": "1.5xIQR on discounted target per private m2",
+    "lower_fence_brl_per_m2": -976.9621760670725,
+    "upper_fence_brl_per_m2": 20780.270293445123,
+    "flagged_rows": 344,
+    "excluded_automatically": false
+  },
+  "validation_median_baseline_metrics": {
+    "n": 2032,
+    "r2": -0.000473396368467327,
+    "rmse_brl": 431967.00671598595,
+    "mae_brl": 310531.82376968506,
+    "mape_percent": 63.64044584777059,
+    "bias_brl": -9396.37337598425
+  },
+  "independent_test_median_baseline_metrics": {
+    "n": 1888,
+    "r2": -0.09608950443975939,
+    "rmse_brl": 589754.527476219,
+    "mae_brl": 384077.87971398304,
+    "mape_percent": 52.28422134005011,
+    "bias_brl": -174616.8907309322
+  },
+  "model_file": "models\\offer_avm\\offer_avm_xgboost.joblib",
+  "prediction_workbook": "dados\\derivados\\30.10.2026_avm_estimativas.xlsx",
+  "test_residuals_file": "models\\offer_avm\\test_residuals.csv",
+  "limitations": [
+    "O rótulo é um desconto fixo de 10% sobre oferta, não preço final de venda.",
+    "A validação geográfica reserva distritos inteiros; os resultados também são reportados por Região.",
+    "A data de captura dos anúncios não foi identificada; não há holdout temporal.",
+    "O teste independente preserva distritos inteiros fora do treino e da seleção.",
+    "Amostra de ofertas e alvo proxy não comprovam valor de mercado ou avaliação."
+  ],
+  "data_audit": {
+    "input_rows": 12762,
+    "training_eligible_rows": 9588,
+    "excluded_rows_by_reason": {
+      "age_over_20_years": 3,
+      "offer_missing_or_nonpositive": 742,
+      "private_area_missing_or_out_of_range": 1521,
+      "target_missing_or_nonpositive": 908
+    },
+    "target_rows_without_valid_offer": 742,
+    "feature_values_out_of_range_set_to_missing": {
+      "VAGAS": 1
+    },
+    "feature_missing_coverage": {
+      "LATITUDE": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "LONGITUDE": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "IDADE": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "QUARTOS": {
+        "count": 2,
+        "percent": 0.02
+      },
+      "BANHEIROS": {
+        "count": 1,
+        "percent": 0.01
+      },
+      "VAGAS": {
+        "count": 20,
+        "percent": 0.21
+      },
+      "ELEVADOR": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "RENDA MEDIANA IBGE 2022 (R$)": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "RENDA MÉDIA IBGE 2022 (R$)": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "Área total": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "AREA PRIV.": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "CEP": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "Região": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "Distrito": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "SETOR CENSITÁRIO 2022": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "Padrão (IPTU)": {
+        "count": 0,
+        "percent": 0.0
+      }
+    },
+    "rows_with_offer_discount_mismatch": 0,
+    "unique_validation_districts": 45,
+    "official_region_nonempty_rows": 9588
+  }
+}

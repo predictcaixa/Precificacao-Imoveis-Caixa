@@ -1,0 +1,12 @@
+INFO:     127.0.0.1:54889 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63245 - "POST /avm/imports HTTP/1.1" 201 Created
+INFO:     127.0.0.1:63246 - "POST /predict/batch?modelo=catboost HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63247 - "POST /avm/imports/49bf8780-0cd6-4c6d-ac02-ee87b7607f9f/rows HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63248 - "PATCH /avm/imports/49bf8780-0cd6-4c6d-ac02-ee87b7607f9f HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63530 - "GET /modelo/info HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63537 - "POST /avm/imports HTTP/1.1" 201 Created
+INFO:     127.0.0.1:63538 - "POST /predict/batch?modelo=catboost HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63539 - "POST /avm/imports/cf01ae56-1b7f-4632-9492-30ebbd895602/rows HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63540 - "PATCH /avm/imports/cf01ae56-1b7f-4632-9492-30ebbd895602 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58186 - "GET /avm/imports?limit=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58190 - "GET /avm/imports?limit=1 HTTP/1.1" 200 OK

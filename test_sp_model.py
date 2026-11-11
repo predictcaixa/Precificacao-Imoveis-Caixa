@@ -1,48 +1,70 @@
+import ast
+import unittest
 from pathlib import Path
 
-from main import ImovelInput
-from train_model import build_dataset_sao_paulo
+from train_model import (
+    RAW_DATA_PATH,
+    TRAINING_BLOCK_REASON,
+    build_dataset_sao_paulo,
+    carregar_dados,
+)
 
 
-def test_imovel_input_accepts_rua_and_region_aliases():
-    imovel = ImovelInput(
-        regiao="zona leste",
-        rua="Avenida Paulista",
-        area=90,
-        quartos=3,
-        banheiros=2,
-        vagas=1,
-        idade=5,
-        suite=1,
-        sacada=1,
-        piscina=0,
-    )
+class TrainingSafetyTests(unittest.TestCase):
+    def test_training_source_points_to_data_folder(self):
+        self.assertEqual(RAW_DATA_PATH.name, "dados_itbi_sp.csv")
+        self.assertEqual(RAW_DATA_PATH.parent.name, "dados")
 
-    assert imovel.regiao == "america"
-    assert imovel.rua == "Avenida Paulista"
+    def test_dataset_builder_refuses_unvalidated_fields(self):
+        with self.assertRaises(RuntimeError) as error:
+            build_dataset_sao_paulo()
+        self.assertEqual(str(error.exception), TRAINING_BLOCK_REASON)
+
+    def test_dataset_loader_does_not_use_legacy_derived_dataset(self):
+        with self.assertRaises(RuntimeError) as error:
+            carregar_dados()
+        self.assertEqual(str(error.exception), TRAINING_BLOCK_REASON)
+
+    def test_non_avm_operational_routes_fail_closed(self):
+        source_path = Path(__file__).resolve().parent / "main.py"
+        module = ast.parse(source_path.read_text(encoding="utf-8"))
+        routes = {"stats_regioes", "gerar_relatorio"}
+        functions = {
+            node.name: node
+            for node in module.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+
+        for name in routes:
+            with self.subTest(route=name):
+                statement = functions[name].body[0]
+                self.assertIsInstance(statement, ast.Raise)
+                call = statement.exc
+                self.assertIsInstance(call, ast.Call)
+                self.assertEqual(call.func.id, "HTTPException")
+                self.assertEqual(call.args[0].value, 503)
+
+    def test_experimental_reference_allows_unknown_iptu_pattern(self):
+        source_path = Path(__file__).resolve().parent / "main.py"
+        module = ast.parse(source_path.read_text(encoding="utf-8"))
+        schema = next(
+            node
+            for node in module.body
+            if isinstance(node, ast.ClassDef) and node.name == "ReferenceEstimateInput"
+        )
+        field = next(
+            node
+            for node in schema.body
+            if isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "codigo_padrao_iptu"
+        )
+        self.assertIsInstance(field.annotation, ast.Subscript)
+        self.assertEqual(field.annotation.value.id, "Optional")
+        self.assertIsInstance(field.value, ast.Call)
+        self.assertEqual(field.value.func.id, "Field")
+        self.assertIsNone(field.value.args[0].value)
 
 
-def test_build_dataset_sao_paulo_extracts_expected_columns():
-    csv_path = Path(__file__).resolve().parent.parent / "dados_itbi_sp.csv"
-    df = build_dataset_sao_paulo(csv_path)
-
-    required = {
-        "regiao",
-        "area",
-        "quartos",
-        "banheiros",
-        "vagas",
-        "idade",
-        "suite",
-        "sacada",
-        "piscina",
-        "preco",
-    }
-
-    assert required.issubset(set(df.columns))
-    assert len(df) > 100
-    assert len(df) < 20000
-    assert df["preco"].between(50_000, 25_000_000).all()
-    assert df["area"].between(30, 500).all()
-    assert (df["quartos"] >= 1).all()
-    assert set(df["regiao"]).issubset({"centro", "america", "anita", "norte", "sul"})
+if __name__ == "__main__":
+    unittest.main()

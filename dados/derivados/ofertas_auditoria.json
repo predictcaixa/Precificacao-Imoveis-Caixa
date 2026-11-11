@@ -1,0 +1,24 @@
+{
+  "input_file": "ofertas_imoveis_template.csv",
+  "row_count": 0,
+  "required_columns_missing": [],
+  "training_ready": false,
+  "initial_screening_passed": false,
+  "training_block_reason": "A auditoria sintática não comprova licença, identidade da unidade, representatividade, deduplicação externa nem validação do modelo.",
+  "unique_rows_passing_basic_checks": 0,
+  "target_definition": "asking_price_brl at listing_captured_at; advertised price only",
+  "counts": {
+    "duplicate_listing_id_groups": 0,
+    "possible_duplicate_content_groups": 0,
+    "unique_listing_ids": 0,
+    "unique_rows_passing_basic_checks": 0
+  },
+  "errors": [],
+  "warnings": [],
+  "limitations": [
+    "Checks do not prove source license, truthfulness, or property-unit identity.",
+    "Rows passing checks are not automatically suitable for model training.",
+    "A model trained on listings predicts asking prices, not sale prices or appraisals.",
+    "Training additionally needs deduplication, temporal/geographic validation, and leakage review."
+  ]
+}

@@ -1,0 +1,6 @@
+INFO:     Started server process [45460]
+INFO:     Waiting for application startup.
+2026-11-10 10:32:10,335 INFO Armazenamento de importações conectado: sqlite.
+2026-11-10 10:32:19,523 INFO Modelos AVM experimentais carregados: catboost, random_forest, xgboost; selecionado=catboost_depth_4.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)
