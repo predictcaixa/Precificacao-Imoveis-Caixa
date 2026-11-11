@@ -5,6 +5,7 @@ Endpoints:
   GET  /                         → health check
   POST /predict                  → previsão experimental do alvo 90% da oferta
   POST /predict/batch            → previsão experimental em lote
+  POST /predict/workbook         → lote manual com saída XLSX no layout TESTE
   POST /referencia/estimativa    → comparador exploratório, não operacional
   GET  /regioes/stats            → suspenso até validação
   GET  /modelo/info              → estado da validação
@@ -17,7 +18,9 @@ Execução:
 
 import os
 import json
+from io import BytesIO
 import logging
+import math
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
@@ -25,7 +28,10 @@ from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel, Field, validator
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, PatternFill
 
 from scripts.audit_evaluation_csv import DEFAULT_INPUT as EVALUATIONS_PATH
 from scripts.audit_evaluation_csv import audit_csv as audit_evaluations_csv
@@ -106,6 +112,12 @@ modelo      = None
 reference_rates = None
 avm_bundle: Optional[AvmModelBundle] = None
 avm_bundles: dict[str, AvmModelBundle] = {}
+avm_default_model_key: Optional[str] = None
+AVM_OUTPUT_ADJUSTMENT_FACTOR = float(
+    os.environ.get("AVM_OUTPUT_ADJUSTMENT_FACTOR", "1.0")
+)
+if not math.isfinite(AVM_OUTPUT_ADJUSTMENT_FACTOR) or not 0.5 <= AVM_OUTPUT_ADJUSTMENT_FACTOR <= 1.5:
+    raise ValueError("AVM_OUTPUT_ADJUSTMENT_FACTOR must be between 0.5 and 1.5.")
 
 REGIOES_VALIDAS = ["centro", "america", "anita", "norte", "sul", "leste", "oeste"]
 
@@ -120,7 +132,7 @@ ALIASES_REGIAO = {
 
 @app.on_event("startup")
 async def carregar_recursos():
-    global metadata, reference_rates, avm_bundle, avm_bundles
+    global metadata, reference_rates, avm_bundle, avm_bundles, avm_default_model_key
     offer_avm_store.initialize_store()
     logger.info(
         "Armazenamento de importações conectado: %s.",
@@ -142,18 +154,23 @@ async def carregar_recursos():
 
     if os.path.isfile(AVM_REPORT_PATH):
         avm_bundles = load_avm_models(Path(AVM_REPORT_PATH))
-        selected_key = _avm_model_key(
-            next(iter(avm_bundles.values())).report.get("selected_model")
-        )
+        configured_model = os.environ.get("AVM_DEFAULT_MODEL", "catboost").strip()
+        selected_key = _avm_model_key(configured_model)
+        if selected_key is None:
+            selected_key = _avm_model_key(
+                next(iter(avm_bundles.values())).report.get("selected_model")
+            )
         avm_bundle = avm_bundles.get(selected_key) if selected_key else None
         if avm_bundle is None:
             raise ValueError(
                 "O modelo selecionado no relatório não está entre os artefatos carregados."
             )
+        avm_default_model_key = selected_key
+        selected_entry = avm_bundle.report.get("available_models", {}).get(selected_key, {})
         logger.info(
             "Modelos AVM experimentais carregados: %s; selecionado=%s.",
             ", ".join(sorted(avm_bundles)),
-            avm_bundle.report["selected_model"],
+            selected_entry.get("candidate", avm_bundle.report["selected_model"]),
         )
     else:
         logger.warning(
@@ -362,11 +379,15 @@ class CaixaExploratoryEstimateInput(BaseModel):
 
 @app.get("/", tags=["Status"])
 def health():
+    selected_entry = (
+        avm_bundle.report.get("available_models", {}).get(avm_bundle.model_type, {})
+        if avm_bundle is not None else {}
+    )
     return {
         "status": "experimental" if avm_bundle is not None else "degradado",
         "modelo_carregado": avm_bundle is not None,
         "modelo_avm": (
-            avm_bundle.report["selected_model"] if avm_bundle is not None else None
+            selected_entry.get("candidate", avm_bundle.model_type) if avm_bundle is not None else None
         ),
         "predicao_avm_experimental_disponivel": avm_bundle is not None,
         "referencia_experimental_disponivel": reference_rates is not None,
@@ -465,9 +486,10 @@ def predict(imovel: AvmApartmentInput, modelo: Optional[str] = None):
     _require_model_fields(property_data)
     bundle = _resolve_avm_bundle(modelo)
     try:
-        prediction = predict_discounted_offer(bundle, property_data)
+        raw_prediction = predict_discounted_offer(bundle, property_data)
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
+    prediction = round(raw_prediction * AVM_OUTPUT_ADJUSTMENT_FACTOR, 2)
     model_key = getattr(
         bundle, "model_type", _avm_model_key(bundle.report.get("selected_model"))
     )
@@ -478,7 +500,12 @@ def predict(imovel: AvmApartmentInput, modelo: Optional[str] = None):
         "algoritmo": model_key,
         "alvo": bundle.report["target_definition"],
         "estimativa_alvo_brl": prediction,
-        "metodologia": "AVM experimental com atributos do imóvel; alvo treinado como 0,90 × preço de oferta",
+        "estimativa_modelo_bruta_brl": raw_prediction,
+        "fator_ajuste_saida": AVM_OUTPUT_ADJUSTMENT_FACTOR,
+        "metodologia": (
+            "AVM experimental; alvo treinado como 0,90 × preço de oferta; "
+            f"fator adicional de saida x {AVM_OUTPUT_ADJUSTMENT_FACTOR:.4f}"
+        ),
         "tipo_estimativa": "90% do preço anunciado (proxy com desconto fixo)",
         "aviso": (
             "Não representa preço final de venda nem avaliação de mercado/CAIXA. "
@@ -506,6 +533,7 @@ def predict_batch(imoveis: List[AvmApartmentInput], modelo: Optional[str] = None
         index: _direct_offer_target(properties[index]["valor_oferta_brl"])
         for index in direct_indexes
     }
+    raw_model_predictions_by_index: Dict[int, float] = {}
     model_bundle = None
     if model_indexes:
         model_bundle = _resolve_avm_bundle(modelo)
@@ -515,7 +543,12 @@ def predict_batch(imoveis: List[AvmApartmentInput], modelo: Optional[str] = None
             )
         except ValueError as error:
             raise HTTPException(422, str(error)) from error
-        predictions_by_index.update(zip(model_indexes, model_predictions))
+        for index, raw_prediction in zip(model_indexes, model_predictions):
+            raw_value = float(raw_prediction)
+            raw_model_predictions_by_index[index] = raw_value
+            predictions_by_index[index] = round(
+                raw_value * AVM_OUTPUT_ADJUSTMENT_FACTOR, 2
+            )
 
     model_key = getattr(model_bundle, "model_type", None) if model_bundle else None
     model_entry = (
@@ -530,11 +563,18 @@ def predict_batch(imoveis: List[AvmApartmentInput], modelo: Optional[str] = None
         {
             "indice": index,
             "estimativa_alvo_brl": predictions_by_index[index],
+            "estimativa_modelo_bruta_brl": raw_model_predictions_by_index.get(index),
+            "fator_ajuste_saida": (
+                AVM_OUTPUT_ADJUSTMENT_FACTOR if index in model_indexes else 1.0
+            ),
             "status": "calculado" if index in direct_indexes else "experimental",
             "metodologia": (
                 "Valor de oferta informado × 0,9 (cálculo direto)"
                 if index in direct_indexes
-                else "AVM experimental; alvo treinado como 0,90 × preço de oferta"
+                else (
+                    "AVM experimental; alvo proxy 0,90 × oferta; "
+                    f"fator adicional de saida x {AVM_OUTPUT_ADJUSTMENT_FACTOR:.4f}"
+                )
             ),
             "tipo_estimativa": (
                 "90% do valor de oferta informado"
@@ -553,6 +593,7 @@ def predict_batch(imoveis: List[AvmApartmentInput], modelo: Optional[str] = None
             else "0,90 × valor de oferta informado"
         ),
         "quantidade": len(results),
+        "fator_ajuste_saida": AVM_OUTPUT_ADJUSTMENT_FACTOR,
         "estimativas": results,
         "aviso": (
             "Não representa preço final de venda nem avaliação de mercado/CAIXA. "
@@ -560,6 +601,109 @@ def predict_batch(imoveis: List[AvmApartmentInput], modelo: Optional[str] = None
         ),
     }
 
+
+@app.post(
+    "/predict/workbook",
+    tags=["Predição"],
+    response_class=Response,
+    responses={
+        200: {
+            "description": "Planilha Excel com a estrutura de saída do TESTE.xlsx.",
+            "content": {
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                    "schema": {"type": "string", "format": "binary"}
+                }
+            },
+        }
+    },
+)
+def predict_workbook(imoveis: List[AvmApartmentInput], modelo: Optional[str] = None):
+    """Estimate manually submitted properties and return the standard TESTE workbook layout."""
+    result = predict_batch(imoveis, modelo)
+    headers = [
+        "x", "AVALIAÇÃO", "OFERTA", "Endereço", "Complemento", "Andar",
+        "Bairro / subdistrito", "CEP", "Município", "Tipologia", "QUARTOS",
+        "Banheiros", "VAGAS", "Elevador", "AREA TOTAL", "AREA PRIVATIVA",
+        "Fração ideal", "Matrícula n°", "Cartório (ofício)", "Nome do condomínio",
+        "Contribuinte (SQL)", "idade", "Valor estimado (R$)",
+        "Valor unitário (R$/m²)", "Metodologia", "Observações",
+    ]
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "teste"
+    sheet.cell(1, 1, "Resultado de precificação de imóveis")
+    sheet.cell(2, 1, "Estimativas geradas pela API AVM a partir dos dados enviados.")
+    sheet.cell(3, 1, "Campos sem informação foram mantidos vazios; não foram presumidos como zero.")
+    sheet.cell(4, 1, "A coluna AVALIAÇÃO é apenas referência e não é usada como entrada do modelo.")
+    sheet.cell(5, 1, "As quatro colunas finais registram valor estimado, valor unitário, metodologia e observações.")
+    sheet.cell(6, 1, "Estimativas experimentais não representam avaliação independente de mercado/CAIXA.")
+    for row in range(1, 7):
+        sheet.merge_cells(start_row=row, start_column=1, end_row=row, end_column=len(headers))
+    header_row = 8
+    for column, label in enumerate(headers, start=1):
+        cell = sheet.cell(header_row, column, label)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="284B63")
+        cell.alignment = Alignment(wrap_text=True, vertical="center")
+    for column in range(23, 27):
+        sheet.cell(header_row, column).fill = PatternFill("solid", fgColor="D9EAD3")
+
+    for index, (imovel, estimate) in enumerate(zip(imoveis, result["estimativas"]), start=1):
+        item = avm_input_as_dict(imovel)
+        prediction = estimate["estimativa_alvo_brl"]
+        area = item.get("area_privativa_m2")
+        row = header_row + index
+        values = {
+            1: index,
+            3: item.get("valor_oferta_brl"),
+            7: item.get("distrito"),
+            8: item.get("cep"),
+            11: item.get("quartos"),
+            12: item.get("banheiros"),
+            13: item.get("vagas"),
+            14: item.get("elevador"),
+            15: item.get("area_total_m2"),
+            16: area,
+            22: item.get("idade_anos"),
+            23: prediction,
+            24: round(prediction / area, 2) if prediction is not None and area else None,
+            25: estimate.get("metodologia"),
+            26: (
+                "Cálculo direto: 90% da oferta informada. Não é avaliação independente de mercado/CAIXA."
+                if estimate.get("status") == "calculado"
+                else "Estimativa experimental do alvo de 90% do preço de oferta; não é avaliação de mercado/CAIXA."
+            ),
+        }
+        if item.get("elevador") is None:
+            values[26] += " Elevador não informado; nenhum valor foi presumido."
+        for column, value in values.items():
+            if value is not None:
+                sheet.cell(row, column, value)
+        sheet.cell(row, 23).number_format = '"R$" #,##0.00'
+        sheet.cell(row, 24).number_format = '"R$" #,##0.00'
+        for column in (25, 26):
+            sheet.cell(row, column).alignment = Alignment(wrap_text=True, vertical="top")
+
+    sheet.freeze_panes = "A9"
+    sheet.auto_filter.ref = f"A{header_row}:Z{header_row + len(imoveis)}"
+    sheet.row_dimensions[header_row].height = 34
+    widths = {
+        "A": 8, "B": 16, "C": 16, "D": 42, "E": 30, "F": 10,
+        "G": 24, "H": 14, "I": 18, "J": 18, "K": 11, "L": 12,
+        "M": 10, "N": 12, "O": 14, "P": 16, "Q": 14, "R": 18,
+        "S": 18, "T": 24, "U": 20, "V": 10, "W": 20, "X": 22,
+        "Y": 42, "Z": 64,
+    }
+    for column, width in widths.items():
+        sheet.column_dimensions[column].width = width
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="resultado_precificacao_avm.xlsx"'},
+    )
 
 @app.post("/referencia/estimativa", tags=["Experimental"])
 def estimate_reference_endpoint(imovel: ReferenceEstimateInput):
@@ -610,13 +754,17 @@ def info_modelo():
     reference_period = reference_rates.get("reference_period") if reference_rates else None
     filter_counts = reference_rates.get("filter_counts") if reference_rates else None
     avm_report = avm_bundle.report if avm_bundle is not None else {}
-    selected_model_key = _avm_model_key(avm_report.get("selected_model"))
+    selected_model_key = (
+        avm_bundle.model_type if avm_bundle is not None
+        else _avm_model_key(avm_report.get("selected_model"))
+    )
     loaded_models = dict(avm_bundles)
     if not loaded_models and avm_bundle is not None:
         loaded_key = getattr(avm_bundle, "model_type", selected_model_key)
         if loaded_key:
             loaded_models[loaded_key] = avm_bundle
     available_model_reports = avm_report.get("available_models", {})
+    selected_model_report = available_model_reports.get(selected_model_key, {})
     models_available = []
     for model_key, bundle in loaded_models.items():
         entry = available_model_reports.get(model_key, {})
@@ -648,17 +796,20 @@ def info_modelo():
             "disponivel": avm_bundle is not None,
             "habilita_predicao": avm_bundle is not None,
             "homologado": False,
+            "fator_ajuste_saida": AVM_OUTPUT_ADJUSTMENT_FACTOR,
+            "referencia_fator_ajuste": "fator adicional configurado pelo ambiente",
             "modelo": (
-                avm_bundle.report["selected_model"] if avm_bundle is not None else None
+                selected_model_report.get("candidate", avm_bundle.model_type)
+                if avm_bundle is not None else None
             ),
             "modelos_disponiveis": models_available,
             "metricas_teste_geografico": (
-                avm_bundle.report.get("independent_geographic_test_metrics")
+                selected_model_report.get("independent_geographic_test_metrics")
                 if avm_bundle is not None
                 else None
             ),
             "metricas_validacao": (
-                avm_bundle.report.get("selected_model_validation_metrics")
+                selected_model_report.get("validation_metrics")
                 if avm_bundle is not None
                 else None
             ),

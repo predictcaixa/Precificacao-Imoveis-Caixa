@@ -7,6 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -228,13 +231,75 @@
       border-radius: var(--radius-sm); padding: 8px 12px;
       color: var(--accent2); margin-bottom: .5rem;
     }
+    .status-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .status-pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .status-blocked { color: var(--danger); background: rgba(224,92,92,.14); }
+    .status-pending { color: var(--warn); background: rgba(245,166,35,.14); }
+    .status-evidence { color: var(--accent2); background: rgba(62,207,142,.14); }
+    .notice { padding: 1rem 1.25rem; border: 1px solid rgba(245,166,35,.3); background: rgba(245,166,35,.08); border-radius: var(--radius); margin-bottom: 1rem; }
+    .notice strong { color: var(--warn); }
+    .deliverable-list { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .deliverable-item { padding: .85rem 1rem; background: var(--bg3); border-radius: var(--radius-sm); }
+    .deliverable-item strong { display: block; font-size: 13px; margin-bottom: 3px; }
+    .deliverable-item small { color: var(--muted); font-size: 12px; }
+    .doc-links { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+    .doc-links a { color: var(--accent); font-size: 13px; text-decoration: none; }
+    .doc-links a:hover { text-decoration: underline; }
+    .ops-section { margin-bottom: 1.5rem; }
+    .ops-section > h2 { font-size: 16px; font-weight: 600; margin-bottom: .25rem; }
+    .ops-section > p { color: var(--muted); font-size: 13px; margin-bottom: .9rem; }
+    .ops-card-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
+    .ops-model-card { padding: 1.25rem 1.5rem; }
+    .ops-model-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+    .ops-model-name { font-family: 'DM Mono',monospace; font-size: 14px; }
+    .ops-model-scope { color: var(--muted); font-size: 12px; margin-bottom: 3px; }
+    .ops-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+    .ops-badge-ready { background: rgba(62,207,142,.15); color: var(--accent2); }
+    .ops-badge-pending { background: rgba(245,166,35,.15); color: var(--warn); }
+    .ops-metric-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .75rem; }
+    .ops-metric { background: var(--bg3); border-radius: var(--radius-sm); padding: .8rem; }
+    .ops-metric small { display: block; color: var(--muted); font-size: 11px; margin-bottom: 3px; }
+    .ops-metric strong { font-family: 'DM Mono',monospace; font-size: 17px; }
+    .ops-empty { padding: 1rem; color: var(--muted); background: var(--bg3); border-radius: var(--radius-sm); font-size: 13px; }
+    .ops-feature-list { margin-top: 1rem; }
+    .ops-meta { color: var(--muted); font-size: 12px; margin-top: 1rem; }
+    .avm-map-layout { display: grid; grid-template-columns: minmax(0,2fr) minmax(250px,.85fr); gap: 1rem; }
+    .avm-map-panel { overflow: hidden; padding: 0; }
+    #avm-region-map { height: 520px; min-height: 360px; background: #e8edf2; }
+    .avm-map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding: .85rem 1rem; font-size: 11px; color: var(--muted); }
+    .avm-map-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .avm-map-swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .avm-map-note { color: var(--muted); font-size: 11px; padding: 0 1rem 1rem; }
+    .avm-map-sidebar { display: flex; flex-direction: column; gap: 1rem; }
+    .avm-region-list { display: grid; gap: .65rem; }
+    .avm-region-item { width: 100%; display: grid; grid-template-columns: minmax(0,1fr) 1fr auto; align-items: center; gap: .6rem; border: 0; background: none; color: var(--text); text-align: left; font: inherit; font-size: 12px; cursor: pointer; padding: 2px 0; }
+    .avm-region-item:hover .avm-region-name, .avm-region-item[aria-pressed="true"] .avm-region-name { color: var(--accent); }
+    .avm-region-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .avm-region-track { height: 7px; background: var(--bg3); border-radius: 5px; overflow: hidden; }
+    .avm-region-bar { display: block; height: 100%; border-radius: inherit; }
+    .avm-region-value { font-family: 'DM Mono',monospace; white-space: nowrap; }
+    .avm-upload-input { display: block; width: 100%; padding: 10px; border: 1px dashed var(--border2); border-radius: var(--radius-sm); color: var(--text); background: var(--bg3); }
+    .avm-upload-results { display: none; margin-top: 1rem; }
+    .avm-upload-summary { color: var(--muted); font-size: 13px; margin-bottom: .75rem; }
+    .avm-upload-table-wrap { overflow-x: auto; }
+    .avm-download { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .avm-download:hover { text-decoration: underline; }
+    .leaflet-container { font-family: 'DM Sans',sans-serif; }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--bg2); color: var(--text); }
+    .leaflet-control-attribution { font-size: 10px !important; }
 
     @media(max-width:900px) {
       .sidebar { display: none; }
       .main { margin-left: 0; padding: 1.25rem; }
       .stat-grid { grid-template-columns: 1fr 1fr; }
+      .status-grid { grid-template-columns: 1fr; }
+      .deliverable-list { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .region-grid { grid-template-columns: 1fr 1fr; }
+      .ops-card-grid { grid-template-columns: 1fr; }
+      .ops-metric-grid { grid-template-columns: 1fr 1fr; }
+      .avm-map-layout { grid-template-columns: 1fr; }
+      #avm-region-map { height: 420px; }
     }
   </style>
 </head>
@@ -251,191 +316,510 @@
       </div>
     </div>
     <nav class="nav-section">
-      <div class="nav-label">Módulos</div>
-      <button class="nav-item active" onclick="goView('predictor', this)"><span class="dot"></span>Preditor de Preço</button>
-      <button class="nav-item" onclick="goView('iup', this)"><span class="dot"></span>Padrão Construtivo (IUP)</button>
-      <button class="nav-item" onclick="goView('regioes', this)"><span class="dot"></span>Análise por Região</button>
-      <button class="nav-item" onclick="goView('batch', this)"><span class="dot"></span>Predição em Lote</button>
-      <button class="nav-item" onclick="goView('relatorio', this)"><span class="dot"></span>Relatório</button>
-      <button class="nav-item" onclick="goView('modelo', this)"><span class="dot"></span>Métricas do Modelo</button>
-      <button class="nav-item" onclick="goView('api', this)"><span class="dot"></span>Documentação API</button>
+    <div class="nav-label">Sistema e evidências</div>
+    <button class="nav-item active" onclick="goView('dashboard', this)"><span class="dot"></span>Situação do modelo</button>
+    <button class="nav-item" onclick="goView('mlops', this)"><span class="dot"></span>Modelo AVM</button>
+    <button class="nav-item" onclick="goView('predictor', this)"><span class="dot"></span>Cálculo de preço ITBI</button>
+    <button class="nav-item" onclick="goView('iup', this)"><span class="dot"></span>Cálculos IUP</button>
+    <button class="nav-item" onclick="goView('dados', this)"><span class="dot"></span>Matriz de dados</button>
+    <button class="nav-item" onclick="goView('entrega', this)"><span class="dot"></span>Entregáveis CAIXA</button>
+    <button class="nav-item" onclick="goView('api', this)"><span class="dot"></span>Status da API</button>
     </nav>
   </aside>
 
   <!-- MAIN -->
   <main class="main">
 
+    <div id="view-dashboard" class="view active">
+      <div class="topbar">
+        <div>
+          <h1>Situação do modelo</h1>
+          <p>Visão de evidências, limites e prontidão dos entregáveis CAIXA</p>
+        </div>
+        <span id="system-state" class="badge" style="background:rgba(245,166,35,.15);color:var(--warn);border-color:rgba(245,166,35,.3)">Carregando status</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Transações elegíveis</div><div class="stat-value" id="dash-count">42.826</div><div class="stat-sub" id="dash-period">ITBI · carregando período</div></div>
+        <div class="stat-card"><div class="stat-label">MdAPE no backtest</div><div class="stat-value" id="dash-mdape">23,63%</div><div class="stat-sub">Referência temporal ITBI, não avaliação</div></div>
+        <div class="stat-card"><div class="stat-label">R² no backtest</div><div class="stat-value" id="dash-r2">0,553</div><div class="stat-sub">Teste temporal da mesma fonte</div></div>
+      </div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-title">Inventário das bases separadas por natureza</div>
+        <p id="catalog-summary" style="font-size:12px;color:var(--muted)">Carregando catálogo auditável…</p>
+        <div class="doc-links"><a href="docs/catalogo_bases.md" target="_blank" rel="noopener">Abrir catálogo documentado</a><a href="dados/derivados/catalogo_bases.json" target="_blank" rel="noopener">Abrir inventário JSON com hashes e contagens</a></div>
+      </div>
+      <div class="status-grid">
+        <div class="card"><div class="card-title">Atributos e evidências</div><p><span class="status-pill status-pending">VALIDAÇÃO NECESSÁRIA</span></p><p style="font-size:12px;color:var(--muted);margin-top:.5rem">Campos preenchidos na planilha enriquecida não comprovam, por si só, a fonte nem a unidade/edifício correto.</p></div>
+        <div class="card"><div class="card-title">Infraestrutura e leitura de matrícula</div><p><span class="status-pill status-pending">EVIDÊNCIA DA EMPRESA</span></p><p style="font-size:12px;color:var(--muted);margin-top:.5rem">O protótipo local não demonstra infraestrutura contratada, controles operacionais ou IA validada para matrículas.</p></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Fluxo recomendado</div>
+        <div class="deliverable-list">
+          <div class="deliverable-item"><strong>1. Definir o alvo</strong><small>Escolher separadamente: transação ITBI, preço pedido ou valor de avaliação.</small></div>
+          <div class="deliverable-item"><strong>2. Fixar definições de área</strong><small>Guardar área construída, área total e área privativa como conceitos distintos.</small></div>
+          <div class="deliverable-item"><strong>3. Validar proveniência</strong><small>Vincular cada atributo à evidência da unidade ou do edifício e registrar cobertura real.</small></div>
+          <div class="deliverable-item"><strong>4. Demonstrar validação e operação</strong><small>Documentar amostras, erros, infraestrutura, segurança, IA de matrícula e monitoramento.</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-mlops" class="view">
+      <div class="topbar">
+        <div>
+          <h1>Modelo AVM experimental</h1>
+          <p>Desempenho, monitoramento e prontidão operacional do modelo de ofertas</p>
+        </div>
+        <button class="btn btn-ghost" type="button" onclick="loadAvmOps()">Atualizar status</button>
+      </div>
+      <div class="notice">
+        <strong>Uso experimental:</strong> o alvo é 90% do preço anunciado, não preço de venda nem avaliação CAIXA.
+        O teste geográfico abaixo é independente da seleção do modelo, mas não substitui validação de avaliações realizadas.
+      </div>
+      <section class="ops-section">
+        <h2>Modelo carregado</h2>
+        <p>Versão e métricas do artefato disponibilizado pela API local.</p>
+        <div class="ops-card-grid">
+          <div class="card ops-model-card">
+            <div class="ops-model-head">
+              <div>
+                <div class="ops-model-scope">Apartamentos · São Paulo · alvo 90% da oferta</div>
+                <div class="ops-model-name" id="ops-model-name">Carregando modelo…</div>
+              </div>
+              <span class="ops-badge ops-badge-pending" id="ops-model-status">Consultando API</span>
+            </div>
+            <div class="ops-metric-grid">
+              <div class="ops-metric"><small>R² · teste geográfico</small><strong id="ops-r2">—</strong></div>
+              <div class="ops-metric"><small>MAE · teste geográfico</small><strong id="ops-mae">—</strong></div>
+              <div class="ops-metric"><small>RMSE · teste geográfico</small><strong id="ops-rmse">—</strong></div>
+              <div class="ops-metric"><small>MAPE · teste geográfico</small><strong id="ops-mape">—</strong></div>
+            </div>
+            <div class="ops-meta" id="ops-model-meta">Aguardando resposta da API.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Importância das variáveis</div>
+            <p style="font-size:12px;color:var(--muted);">Importância calculada pelo modelo treinado; não representa causalidade.</p>
+            <div class="ops-feature-list" id="ops-feature-list"><div class="ops-empty">Aguardando dados do modelo.</div></div>
+          </div>
+        </div>
+      </section>
+      <section class="ops-section">
+        <h2>Monitoramento do modelo</h2>
+        <p>Janela de 14 dias: importações e estimativas em lote são guardadas no banco configurado; preços reais para aferição ainda não são registrados.</p>
+        <div class="card">
+          <div class="ops-empty">Sem preços reais vinculados às previsões. Ainda não há métricas horárias, análise de drift ou alertas automatizados conectados à API.</div>
+        </div>
+      </section>
+      <section class="ops-section">
+        <h2>Treinamentos e comparação</h2>
+        <p>Treinos são executados manualmente pelo pipeline; nenhum desafiante é promovido automaticamente.</p>
+        <div class="card">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>Algoritmo</th><th>Estado</th><th>MAE de validação</th><th>Observação</th></tr></thead>
+              <tbody>
+                <tr><td>Random Forest</td><td id="ops-rf-status">Aguardando API</td><td id="ops-rf-mae">—</td><td id="ops-rf-note">—</td></tr>
+                <tr><td>CatBoost</td><td id="ops-catboost-status">—</td><td id="ops-catboost-mae">—</td><td id="ops-catboost-note">—</td></tr>
+                <tr><td>XGBoost</td><td id="ops-xgboost-status">—</td><td id="ops-xgboost-mae">—</td><td id="ops-xgboost-note">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ops-meta" id="ops-split-meta">Sem informações de partição.</p>
+        </div>
+      </section>
+      <section class="ops-section">
+        <h2>Validação geográfica por região</h2>
+        <p>Resultado do conjunto independente, com distritos inteiros separados do treino e da seleção.</p>
+        <div class="card">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>Região</th><th>Amostra</th><th>R²</th><th>MAE</th><th>MAPE</th></tr></thead>
+              <tbody id="ops-regions"><tr><td colspan="5">Aguardando dados do modelo.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="ops-section">
+        <h2>Infraestrutura e prontidão</h2>
+        <p>Estado dos recursos operacionais efetivamente demonstrados neste projeto.</p>
+        <div class="ops-card-grid">
+          <div class="card"><div class="card-title">Inferência</div><p><span class="status-pill status-evidence">API LOCAL</span></p><p style="font-size:12px;color:var(--muted);margin-top:.5rem">A rota de previsão é habilitada quando o artefato local do modelo é carregado pelo FastAPI.</p></div>
+          <div class="card"><div class="card-title">Registro, agenda e promoção</div><p><span class="status-pill status-pending">NÃO CONFIGURADOS</span></p><p style="font-size:12px;color:var(--muted);margin-top:.5rem">Não há MLflow Model Registry, orquestração de retreino nem promoção automática demonstrados neste repositório.</p></div>
+        </div>
+      </section>
+    </div>
+
     <!-- ══════════════════════════════════════════
          VIEW: PREDITOR
     ══════════════════════════════════════════ -->
-    <div id="view-predictor" class="view active">
+    <div id="view-predictor" class="view">
       <div class="topbar">
         <div>
-          <h1>Preditor de Preço</h1>
-          <p>Estimativa com Regressão Ridge — R² = <span id="hdr-r2">0.93</span></p>
+          <h1>Cálculo comparativo de preço</h1>
+          <p>Estimativa calculada com transações ITBI de São Paulo</p>
         </div>
-        <span class="badge">🟢 Modelo ativo</span>
       </div>
 
       <div class="form-grid">
         <!-- Formulário -->
         <div class="card">
-          <div class="card-title">Características do imóvel</div>
+          <div class="card-title">Dados cadastrais do imóvel</div>
 
           <div class="form-group">
-            <label>Região</label>
-            <select id="f-regiao" onchange="calcular()">
-              <option value="centro">Centro</option>
-              <option value="america">Zona Leste</option>
-              <option value="anita">Zona Oeste</option>
-              <option value="norte">Zona Norte</option>
-              <option value="sul">Zona Sul</option>
+            <label for="f-area">Área Construída IPTU (m²)</label>
+            <input type="number" id="f-area" min="15" max="1000" step="0.01" placeholder="Ex.: 85">
+          </div>
+
+          <div class="form-group">
+            <label for="f-cep">CEP (opcional)</label>
+            <input type="text" id="f-cep" inputmode="numeric" maxlength="9" placeholder="Ex.: 01005-020">
+          </div>
+
+          <div class="form-group">
+            <label for="f-padrao-iptu">Código Padrão (IPTU), se conhecido</label>
+            <select id="f-padrao-iptu">
+              <option value="">Não informado</option>
+              <option value="20">20</option>
+              <option value="21">21</option>
+              <option value="22">22</option>
+              <option value="23">23</option>
+              <option value="24">24</option>
+              <option value="25">25</option>
             </select>
           </div>
 
-          <div class="form-group">
-            <label>Rua / Avenida</label>
-            <select id="f-rua" onchange="calcular()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;outline:none;">
-              <option value="Avenida Paulista">Avenida Paulista</option>
-              <option value="Rua da Consolação">Rua da Consolação</option>
-              <option value="Avenida Faria Lima">Avenida Faria Lima</option>
-              <option value="Rua Oscar Freire">Rua Oscar Freire</option>
-              <option value="Avenida Brigadeiro Faria Lima">Avenida Brigadeiro Faria Lima</option>
-              <option value="Avenida Brasil">Avenida Brasil</option>
-              <option value="Rua Augusta">Rua Augusta</option>
-              <option value="Rua Vergueiro">Rua Vergueiro</option>
-              <option value="Avenida São João">Avenida São João</option>
-              <option value="Avenida Rebouças">Avenida Rebouças</option>
-              <option value="Mooca">Mooca</option>
-              <option value="Pinheiros">Pinheiros</option>
-              <option value="Vila Madalena">Vila Madalena</option>
-              <option value="Centro">Centro</option>
-              <option value="Jardins">Jardins</option>
-            </select>
+          <div class="form-group" style="flex-direction:row;align-items:flex-start;gap:10px;">
+            <input type="checkbox" id="f-confirma-area" style="margin-top:4px;">
+            <label for="f-confirma-area" style="text-transform:none;letter-spacing:0;font-weight:400;">
+              Confirmo que informei a Área Construída do cadastro IPTU, não a área privativa ou total.
+            </label>
           </div>
-
-          <div class="form-group">
-            <label>Área (m²)</label>
-            <div class="slider-wrap">
-              <input type="range" min="30" max="300" value="85" step="5" id="f-area" oninput="sv('f-area','sv-area','m²');calcular()">
-              <span class="slider-val" id="sv-area">85m²</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Quartos</label>
-            <div class="slider-wrap">
-              <input type="range" min="1" max="6" value="3" step="1" id="f-quartos" oninput="sv('f-quartos','sv-quartos','');calcular()">
-              <span class="slider-val" id="sv-quartos">3</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Banheiros</label>
-            <div class="slider-wrap">
-              <input type="range" min="1" max="5" value="2" step="1" id="f-banheiros" oninput="sv('f-banheiros','sv-banheiros','');calcular()">
-              <span class="slider-val" id="sv-banheiros">2</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Vagas de garagem</label>
-            <div class="slider-wrap">
-              <input type="range" min="0" max="4" value="1" step="1" id="f-vagas" oninput="sv('f-vagas','sv-vagas','');calcular()">
-              <span class="slider-val" id="sv-vagas">1</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Idade do imóvel (anos)</label>
-            <div class="slider-wrap">
-              <input type="range" min="0" max="40" value="5" step="1" id="f-idade" oninput="sv('f-idade','sv-idade','a');calcular()">
-              <span class="slider-val" id="sv-idade">5a</span>
-            </div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-top:.5rem;">
-            <div class="form-group" style="margin-bottom:0">
-              <label>Suítes</label>
-              <div class="slider-wrap">
-                <input type="range" min="0" max="4" value="1" step="1" id="f-suite" oninput="sv('f-suite','sv-suite','');calcular()">
-                <span class="slider-val" id="sv-suite">1</span>
-              </div>
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Sacadas</label>
-              <div class="slider-wrap">
-                <input type="range" min="0" max="3" value="1" step="1" id="f-sacada" oninput="sv('f-sacada','sv-sacada','');calcular()">
-                <span class="slider-val" id="sv-sacada">1</span>
-              </div>
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Piscina</label>
-              <div class="slider-wrap">
-                <input type="range" min="0" max="1" value="0" step="1" id="f-piscina" oninput="sv('f-piscina','sv-piscina','');calcular()">
-                <span class="slider-val" id="sv-piscina">0</span>
-              </div>
-            </div>
-          </div>
+          <button class="btn btn-primary" id="estimate-button" type="button" onclick="calcular()">Calcular preço de referência</button>
+          <div class="loading" id="estimate-loading">Consultando comparáveis ITBI…</div>
+          <p id="estimate-error" role="alert" style="color:var(--danger);font-size:12px;margin-top:.75rem;"></p>
         </div>
 
         <!-- Resultado -->
         <div>
           <div class="result-box">
-            <div class="result-label">Preço estimado</div>
-            <div class="result-price" id="r-preco">R$ 0</div>
-            <div class="result-m2" id="r-m2">R$ 0/m²</div>
+            <div class="result-label">Preço comparativo calculado (R$)</div>
+            <div class="result-price" id="r-preco">—</div>
+            <div class="result-m2" id="r-m2">Nenhum cálculo solicitado.</div>
             <div class="result-range">
               <div class="result-range-item">
-                <small>Mínimo estimado</small>
+                <small>Percentil 10 (observado)</small>
                 <strong id="r-min">—</strong>
               </div>
               <div class="result-range-item">
-                <small>Máximo estimado</small>
+                <small>Percentil 90 (observado)</small>
                 <strong id="r-max">—</strong>
               </div>
             </div>
           </div>
 
           <div class="card" style="margin-bottom:1rem;">
-            <div class="card-title">Contribuição de cada feature</div>
-            <div id="feat-bars"></div>
+            <div class="card-title">Escopo da referência</div>
+            <div id="comparaveis" style="font-size:12px;color:var(--muted);">Nenhum cálculo solicitado.</div>
           </div>
 
           <div class="card">
-            <div class="card-title">Imóveis comparáveis no dataset</div>
-            <div id="comparaveis"></div>
+            <div class="card-title">Validação e limitações</div>
+            <p id="reference-limitations" style="font-size:12px;color:var(--muted);">
+              O preço calculado é uma referência comparativa baseada em transações ITBI; não é preço de oferta nem avaliação CAIXA. A faixa observada não é intervalo de confiança individual.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1.5rem;">
+        <div class="card-title">Estimativa AVM experimental — 90% da oferta</div>
+        <p style="font-size:12px;color:var(--warn);margin-bottom:1rem;">
+          Esta rota estima o alvo proxy treinado (oferta com desconto fixo de 10%).
+          Não é preço de venda nem avaliação CAIXA e não deve orientar crédito ou garantia.
+        </p>
+        <div class="form-group">
+          <label for="avm-model-select">Modelo de previsão</label>
+          <select id="avm-model-select" aria-describedby="avm-model-help">
+            <option value="">Carregando modelos disponíveis…</option>
+          </select>
+          <p id="avm-model-help" style="font-size:11px;color:var(--muted);margin-top:.35rem;">
+            A escolha também será usada no processamento das planilhas.
+          </p>
+        </div>
+        <div class="form-group">
+          <label>Mapa de São Paulo · selecione uma região para a estimativa</label>
+          <div class="avm-map-layout">
+            <div class="card avm-map-panel">
+              <div id="avm-region-map" role="application" aria-label="Mapa interativo de desempenho regional do AVM"></div>
+              <div class="avm-map-legend" aria-label="Legenda do mapa">
+                <span>MAPE no teste:</span>
+                <span class="avm-map-legend-item"><i class="avm-map-swatch" style="background:#3ecf8e"></i>até 15%</span>
+                <span class="avm-map-legend-item"><i class="avm-map-swatch" style="background:#5b8fff"></i>15–20%</span>
+                <span class="avm-map-legend-item"><i class="avm-map-swatch" style="background:#f5a623"></i>acima de 20%</span>
+                <span>· tamanho do círculo = imóveis no teste</span>
+              </div>
+              <p class="avm-map-note" id="avm-map-status" role="status">Carregando métricas regionais… Os círculos representam regiões, não endereços de imóveis.</p>
+            </div>
+            <div class="avm-map-sidebar">
+              <div class="card">
+                <div class="card-title">Maior erro · MAPE</div>
+                <div class="avm-region-list" id="avm-regions-high"><div class="ops-empty">Aguardando métricas.</div></div>
+              </div>
+              <div class="card">
+                <div class="card-title">Menor erro · MAPE</div>
+                <div class="avm-region-list" id="avm-regions-low"><div class="ops-empty">Aguardando métricas.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <div class="form-group"><label for="avm-area">Área privativa (m²) *</label><input id="avm-area" type="number" min="35" max="1000" step="0.1" required placeholder="Ex.: 60"></div>
+            <div class="form-group"><label for="avm-idade">Idade (anos) *</label><input id="avm-idade" type="number" min="0" max="20" step="1" required placeholder="Ex.: 10"></div>
+            <div class="form-group"><label for="avm-quartos">Quartos</label><input id="avm-quartos" type="number" min="0" max="10" step="1" placeholder="Opcional"></div>
+            <div class="form-group"><label for="avm-banheiros">Banheiros</label><input id="avm-banheiros" type="number" min="0" max="10" step="1" placeholder="Opcional"></div>
+            <div class="form-group"><label for="avm-vagas">Vagas</label><input id="avm-vagas" type="number" min="0" max="10" step="1" placeholder="Opcional"></div>
+            <div class="form-group"><label for="avm-elevador">Elevador</label><select id="avm-elevador"><option value="">Não informado</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+          </div>
+          <div>
+            <div class="form-group"><label for="avm-area-total">Área total (m²)</label><input id="avm-area-total" type="number" min="0.1" max="2000" step="0.1" placeholder="Opcional"></div>
+            <div class="form-group"><label for="avm-regiao">Região selecionada</label><select id="avm-regiao" onchange="sincronizarMapaRegiaoAvm()"><option value="">Não informada</option><option>Centro</option><option>Zona Leste</option><option>Zona Leste²</option><option>Zona Norte</option><option>Zona Oeste</option><option>Zona Sul</option></select></div>
+            <div class="form-group"><label for="avm-distrito">Distrito</label><input id="avm-distrito" type="text" maxlength="100" placeholder="Ex.: Bela Vista"></div>
+            <div class="form-group"><label for="avm-cep">CEP (5 ou 8 dígitos)</label><input id="avm-cep" type="text" inputmode="numeric" maxlength="9" placeholder="Ex.: 01005-020"></div>
+            <div class="form-group"><label for="avm-renda-mediana">Renda mediana local (R$)</label><input id="avm-renda-mediana" type="number" min="0.01" step="any" placeholder="Opcional"></div>
+            <div class="form-group"><label for="avm-renda-media">Renda média local (R$)</label><input id="avm-renda-media" type="number" min="0.01" step="any" placeholder="Opcional"></div>
+            <div class="form-group"><label for="avm-setor">Setor censitário</label><input id="avm-setor" type="text" maxlength="30" placeholder="Opcional"></div>
+            <div class="form-group"><label for="avm-padrao">Padrão IPTU</label><input id="avm-padrao" type="text" maxlength="20" placeholder="Opcional"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="avm-button" type="button" onclick="preverAvm()">Estimar valor do alvo AVM</button>
+        <div class="loading" id="avm-loading">Calculando estimativa experimental…</div>
+        <p id="avm-error" role="alert" style="color:var(--danger);font-size:12px;margin-top:.75rem;"></p>
+        <div class="result-box" style="margin-top:1rem;">
+          <div class="result-label">Estimativa do alvo AVM (R$)</div>
+          <div class="result-price" id="avm-result">—</div>
+          <div class="result-m2" id="avm-result-meta">Informe os dados do apartamento para estimar.</div>
+        </div>
+        <div class="card" style="margin-top:1.5rem;">
+          <div class="card-title">Previsão AVM em planilhas</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:1rem;">
+            Selecione um ou mais arquivos .xlsx. Cada planilha será processada separadamente; um arquivo com erro não interrompe os demais.
+            Os originais não são alterados. Baixe uma cópia com as estimativas e o status de cada linha válida.
+          </p>
+          <p style="font-size:12px;margin-bottom:.75rem;">
+            <a class="avm-download" href="dados/modelo_entrada_avm.xlsx" download>Baixar modelo padrão de entrada</a>
+
+          </p>
+          <input class="avm-upload-input" id="avm-xlsx-files" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple aria-describedby="avm-xlsx-help">
+          <p id="avm-xlsx-help" style="font-size:11px;color:var(--muted);margin-top:.5rem;">
+            Até 10 arquivos, 20 MB e 50.000 linhas por planilha. Com VALOR OFERTA positivo, o resultado é calculado diretamente como oferta × 0,9; sem oferta, usa o AVM experimental se área e idade forem válidas. A coluna Metodologia identifica o caminho usado. A base consolidada é reconhecida automaticamente. O arquivo original e o resultado ficam no banco configurado pela API; campos fiscais são armazenados para comparação, mas nunca enviados ao modelo.
+          </p>
+          <button class="btn btn-primary" id="avm-xlsx-button" type="button" style="margin-top:.75rem;" onclick="processarArquivosAvm()">Processar arquivo e prever</button>
+          <div class="loading" id="avm-xlsx-loading"><div class="spinner"></div>Processando arquivos válidos…</div>
+          <p id="avm-xlsx-error" role="alert" style="color:var(--danger);font-size:12px;margin-top:.75rem;"></p>
+          <div id="avm-xlsx-results" class="avm-upload-results" aria-live="polite">
+            <p id="avm-xlsx-summary" class="avm-upload-summary"></p>
+            <div class="avm-upload-table-wrap"><table id="avm-xlsx-table"></table></div>
+          </div>
+          <div class="card" style="margin-top:1rem;">
+            <div class="card-title">Arquivos salvos no banco configurado</div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem;">
+              As importações ficam no <code id="avm-database-label">banco configurado pela API</code>. Remova os registros quando não precisar mais deles.
+            </p>
+            <button class="btn btn-ghost" id="avm-import-history-refresh" type="button" onclick="carregarHistoricoAvm()">Atualizar histórico</button>
+            <p id="avm-import-history-message" role="status" style="font-size:12px;color:var(--muted);margin-top:.75rem;">Abra esta tela para consultar o histórico.</p>
+            <div class="avm-upload-table-wrap"><table id="avm-import-history-table"></table></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════
-         VIEW: REGIÕES
-    ══════════════════════════════════════════ -->
     <div id="view-iup" class="view">
-      <div class="topbar"><div><h1>Padrão Construtivo (IUP)</h1><p>IBAPE/SP 2019 — Índice de Unidades Padronizadas, depreciação Ross-Heidecke</p></div><span class="badge" style="background:rgba(245,166,35,.15);color:var(--warn);border-color:rgba(245,166,35,.3)">Pendente de validação</span></div>
+      <div class="topbar"><div><h1>Cálculos do Padrão Construtivo (IUP)</h1><p>IBAPE/SP 2019 — Índice de Unidades Padronizadas e depreciação Ross-Heidecke</p></div></div>
       <div class="form-grid">
         <div class="card">
-          <div class="card-title">Entrada</div>
-          <div class="form-group"><label>Tipologia / Padrão (Tabela 1)</label><select id="iup-padrao" onchange="calcIUP()"></select></div>
-          <div class="form-group"><label>Idade real (anos)</label><input type="number" id="iup-real" value="10" min="0" max="120" oninput="calcIUP()"></div>
-          <div class="form-group"><label>Idade estimada Ie (obsoletismo) — não pode exceder a real</label><input type="number" id="iup-ie" value="10" min="0" max="120" oninput="calcIUP()"></div>
-          <div class="form-group"><label>Estado de conservação Ec (Quadro 1)</label><select id="iup-ec" onchange="calcIUP()"></select></div>
+          <div class="card-title">Parâmetros do cálculo</div>
+          <div class="form-group"><label for="iup-padrao">Tipologia / padrão (Tabela 1)</label><select id="iup-padrao" onchange="calcIUP()"></select></div>
+          <div class="form-group"><label for="iup-real">Idade real (anos)</label><input type="number" id="iup-real" value="10" min="0" max="120" oninput="calcIUP()"></div>
+          <div class="form-group"><label for="iup-ie">Idade estimada Ie (obsoletismo) — não pode exceder a idade real</label><input type="number" id="iup-ie" value="10" min="0" max="120" oninput="calcIUP()"></div>
+          <div class="form-group"><label for="iup-ec">Estado de conservação Ec (Quadro 1)</label><select id="iup-ec" onchange="calcIUP()"></select></div>
           <p style="font-size:12px;color:var(--muted);">Fórmulas: K = (1 − Ec) × {1 − [Ie/Ir + (Ie/Ir)²]/2} · Foc = R + K × (1 − R)</p>
         </div>
         <div>
           <div class="result-box"><div class="result-label">Fator de obsoletismo e conservação (Foc)</div><div class="result-price" id="iup-foc">—</div><div class="result-m2" id="iup-k">—</div>
             <div class="result-range"><div class="result-range-item"><small>IUP mín.</small><strong id="iup-min">—</strong></div><div class="result-range-item"><small>IUP médio</small><strong id="iup-med">—</strong></div><div class="result-range-item"><small>IUP máx.</small><strong id="iup-max">—</strong></div></div></div>
           <div class="card" id="iup-info" style="margin-bottom:1rem;font-size:13px;color:var(--muted);"></div>
-          <div class="card"><div class="card-title">Uso permitido (itens 3.1 e 3.3.4)</div><p style="font-size:12.5px;color:var(--muted);">O IUP é número puro, usado como variável proxy no Método Comparativo, sobre a parcela de capital da benfeitoria. Não serve ao Método Evolutivo nem como preço direto.</p></div>
+          <div class="card"><div class="card-title">Uso do índice</div><p style="font-size:12.5px;color:var(--muted);">O IUP é um número puro usado como variável proxy no Método Comparativo, sobre a parcela de capital da benfeitoria. Não serve ao Método Evolutivo nem como preço direto.</p></div>
         </div>
       </div>
       <div class="card" style="margin-top:1rem;"><div class="card-title">Tabela de referência (Tabela 1 + Quadro A6)</div><div style="overflow-x:auto;"><table id="iup-tab"></table></div></div>
-      <div class="card" style="margin-top:1rem;"><div class="card-title">Tabela 2 — Coeficiente de Ross-Heidecke K (linha = Ie/Ir; destaque = Ie/Ir da simulação)</div><div style="overflow-x:auto;max-height:420px;overflow-y:auto;"><table id="iup-k-tab"></table></div></div>
+      <div class="card" style="margin-top:1rem;"><div class="card-title">Tabela 2 — Coeficiente de Ross-Heidecke K (linha = Ie/Ir; destaque = valor informado)</div><div style="overflow-x:auto;max-height:420px;overflow-y:auto;"><table id="iup-k-tab"></table></div></div>
       <div class="card" style="margin-top:1rem;"><div class="card-title">Quadro 1 — Estado de conservação (Ec)</div><div style="overflow-x:auto;"><table id="iup-ec-tab"></table></div></div>
     </div>
 
+    <div id="view-dados" class="view">
+      <div class="topbar"><div><h1>Matriz de dados</h1><p>Disponibilidade não significa validação: consulte fonte, unidade de análise e evidência.</p></div></div>
+      <div class="card" style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Atributo / definição</th><th>Disponibilidade original</th><th>Fonte complementar e associação</th><th>Cobertura atual</th><th>Classe / validação</th><th>Obtenção na operação</th><th>Limitação e recomendação</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Preço / alvo (R$)<br><small>Natureza e data do valor</small></td>
+              <td>ITBI contém valor declarado, valor venal e base fiscal em campos distintos. Não foi identificado rótulo rastreável de avaliação.</td>
+              <td>Transação: registro municipal por SQL + data + valor declarado. Avaliação: laudos com finalidade e data-base. Oferta: anúncio capturado com URL e data.</td>
+              <td>ITBI: 42.826 transações elegíveis; ligação da planilha enriquecida: 9.658 únicas e 2 ambíguas. Avaliações identificadas: 0.</td>
+              <td><span class="status-pill status-evidence">OBSERVADO · ITBI</span><br>Auditoria confirma natureza distinta do valor fiscal; avaliação não validada.</td>
+              <td>A OS pode trazer documentos, mas o alvo de treinamento e o valor operacional precisam ser definidos e compatibilizados.</td>
+              <td>Manter transação, oferta, valor fiscal e avaliação separados. Comparador atual não deve ser chamado de avaliação CAIXA.</td>
+            </tr>
+            <tr>
+              <td>Área construída IPTU (m²)<br><small>Área cadastral municipal</small></td>
+              <td>Campo disponível na base municipal e usado no comparador ITBI.</td>
+              <td>Cadastro IPTU; vincular pelo cadastro/SQL e conferir a unidade/edifício a que o cadastro se refere.</td>
+              <td>Campo preenchido em 45.103 linhas ITBI; área correspondente nos 9.658 vínculos únicos. Acurácia para área privativa: não estabelecida.</td>
+              <td><span class="status-pill status-evidence">CADASTRAL / OBSERVADO</span><br>Definição municipal documentada; não valida equivalência com outras áreas.</td>
+              <td>Disponibilidade na OS/matrícula não garantida. Só usar na referência se o solicitante confirmar esta mesma definição cadastral.</td>
+              <td>Usar apenas no comparador atual. Não substituir área total, área fiscal ou área privativa.</td>
+            </tr>
+            <tr>
+              <td>Área privativa (m²)<br><small>Área da unidade conforme documento formal</small></td>
+              <td>Sem campo no ITBI identificado; coluna preenchida na planilha enriquecida.</td>
+              <td>Matrícula, instituição/convenção, planta ou cadastro formal da própria unidade; associar matrícula + bloco/torre + unidade.</td>
+              <td>Preenchimento legado: 9.660/9.660 (100%); cobertura validada por evidência primária: não mensurada.</td>
+              <td><span class="status-pill status-pending">NÃO RASTREADA</span><br>Validação documental ainda não realizada.</td>
+              <td>Verificar documento recebido em cada OS; confirmar qual atributo de área consta e registrar fonte.</td>
+              <td>Priorizar área privativa formalmente cadastrada se compatível com o método. Manter jardim, quintal e terraço separados; não somar automaticamente.</td>
+            </tr>
+            <tr>
+              <td>Área total (m²)<br><small>Definição depende do dicionário/documento</small></td>
+              <td>Sem campo com definição confirmada na fonte ITBI; coluna existe na planilha enriquecida.</td>
+              <td>Documento registral/cadastral com definição e componentes explícitos; não inferir por diferença entre campos.</td>
+              <td>Preenchimento legado: 9.660/9.660 (100%); definição e validação: não demonstradas.</td>
+              <td><span class="status-pill status-pending">SEM DEFINIÇÃO VALIDADA</span></td>
+              <td>Conferir documento da OS e capturar o conceito exato, se disponível.</td>
+              <td>Não equiparar a área construída, privativa, fiscal ou de terreno. Bloquear uso até estabelecer a semântica.</td>
+            </tr>
+            <tr>
+              <td>Área fiscal/cadastral (m²)<br><small>Campo de cadastro e definição oficial</small></td>
+              <td>Há área construída e área de terreno no ITBI/IPTU; “área fiscal” como atributo único não foi confirmada.</td>
+              <td>Dicionário oficial PMSP e documento cadastral correspondente ao imóvel.</td>
+              <td>ND como conceito de “área fiscal”; não atribuir percentagem a campo sem definição.</td>
+              <td><span class="status-pill status-pending">CONCEITO NÃO CONFIRMADO</span></td>
+              <td>Obter somente se constar nos documentos/sistemas da OS e registrar o nome original do campo.</td>
+              <td>Não renomear área construída ou terreno como área fiscal sem fundamento documental.</td>
+            </tr>
+            <tr>
+              <td>Dormitórios (unidade)<br><small>Quantidade por apartamento</small></td>
+              <td>Ausente no ITBI; planilha enriquecida tem valores sem evidência da unidade verificada.</td>
+              <td>Planta/memorial/documento da unidade; anúncio pode apoiar somente com identificação inequívoca da mesma unidade e captura datada.</td>
+              <td>Campo preenchido em 9.660/9.660; cobertura observada com evidência validada: não mensurada.</td>
+              <td><span class="status-pill status-pending">NÃO VALIDADO</span><br>Não classificar como observado.</td>
+              <td>Extrair da matrícula/planta/documento se presente; registrar ausente se não houver prova da unidade.</td>
+              <td>Não inferir pela área. Qualquer estimador exige amostra conhecida independente, teste de ganho preditivo e rótulo “estimado”.</td>
+            </tr>
+            <tr>
+              <td>Banheiros (unidade)<br><small>Quantidade; definir inclusão de lavabo/serviço</small></td>
+              <td>Ausente no ITBI; coluna enriquecida sem proveniência auditada.</td>
+              <td>Documento/planta da mesma unidade ou fonte de anúncio com identificação inequívoca, URL, data e evidência arquivada.</td>
+              <td>Campo preenchido em 9.660/9.660; cobertura verificada por evidência: não mensurada.</td>
+              <td><span class="status-pill status-pending">NÃO VALIDADO</span></td>
+              <td>Extrair e validar quando o documento operacional permitir; não assumir disponibilidade na matrícula.</td>
+              <td>Definir regra de contagem. Não inferir por área. Estimar apenas após validação independente e análise de impacto no preço.</td>
+            </tr>
+            <tr>
+              <td>Vagas privativas (unidade)<br><small>Quantidade vinculada à unidade</small></td>
+              <td>Ausente no ITBI; coluna enriquecida sem prova do vínculo.</td>
+              <td>Matrícula/documento da vaga, convenção e associação à unidade específica.</td>
+              <td>Campo preenchido em 9.660/9.660; cobertura com associação validada: não mensurada.</td>
+              <td><span class="status-pill status-pending">NÃO VALIDADO</span></td>
+              <td>Conferir documentação da OS; se não comprovar vínculo, sinalizar ausente.</td>
+              <td>Não confundir vaga do condomínio, rotativa ou anunciada em outra unidade com vaga privativa desta unidade.</td>
+            </tr>
+            <tr>
+              <td>Elevador (edifício)<br><small>Sim/não; distinguir por bloco/torre</small></td>
+              <td>Ausente no ITBI; coluna enriquecida com fonte/data não confirmadas.</td>
+              <td>Cadastro/documento do edifício ou fonte pública verificável vinculada ao endereço/torre; guardar evidência e data.</td>
+              <td>Campo preenchido legado; cobertura comprovada e atualidade não demonstradas.</td>
+              <td><span class="status-pill status-pending">EXTRAÇÃO NÃO VALIDADA</span><br>Atributo do edifício, não da unidade.</td>
+              <td>Pode ser obtido em documento ou fonte complementar, sujeito à associação correta e consistência da OS.</td>
+              <td>Não inferir existência/quantidade a partir de anúncio de outra unidade sem confirmar mesmo edifício/bloco.</td>
+            </tr>
+            <tr>
+              <td>Idade / ano de produção<br><small>Ano ou idade em anos na data-base</small></td>
+              <td>ACC/IPTU disponível; `IDADE` enriquecida calculada como 2026 − ACC.</td>
+              <td>Cadastro oficial e matrícula/documento de construção; associar à edificação/unidade e definir referência temporal.</td>
+              <td>`IDADE` preenchida em 9.660/9.660; 51 divergências de ACC entre fontes em 9.658 vínculos únicos.</td>
+              <td><span class="status-pill status-pending">CALCULADO</span><br>Fórmula conhecida; divergências e reformas limitam validade.</td>
+              <td>Extrair ano de produção do documento da OS e calcular idade na data-base, registrando fórmula/fonte.</td>
+              <td>Não chamar idade calculada de observada. Não usar idade como substituto de conservação.</td>
+            </tr>
+            <tr>
+              <td>Conservação do condomínio<br><small>Condição do edifício</small></td>
+              <td>Sem campo nas bases examinadas. Mensagem recebida informa exclusão do requisito, pendente de confirmação oficial.</td>
+              <td>Inspeção/evidência atual do condomínio, apenas se a variável for mantida como complementar.</td>
+              <td>0% disponível nas bases examinadas.</td>
+              <td><span class="status-pill status-blocked">AUSENTE</span><br>Retificação oficial a confirmar.</td>
+              <td>Não presumir que a matrícula ou OS informa conservação; seguir a versão oficial vigente e política da CAIXA.</td>
+              <td>Não imputar por idade, anúncio ou imagem isolada. Se não obrigatória, não incluir sem justificativa e validação.</td>
+            </tr>
+            <tr>
+              <td>Localização / CEP<br><small>Endereço, coordenada e precisão</small></td>
+              <td>Endereço ITBI preenchido em 12.150/12.151; coordenadas na enriquecida sem linhagem validada.</td>
+              <td>Endereço/CEP da OS; cadastro/geocodificador autorizado; validar endereço e nível de precisão.</td>
+              <td>Endereço ITBI 99,99%; CEP e coordenadas enriquecidas não equivalem a geolocalização validada.</td>
+              <td><span class="status-pill status-pending">OBSERVADO / PRECISÃO PENDENTE</span></td>
+              <td>OS fornece dados de identificação segundo mensagem recebida; conferir consistência, CEP, número, complemento e município.</td>
+              <td>Documentar geocodificação, datum, divisas, incerteza e fallback; não usar coordenada não validada como localização exata da unidade.</td>
+            </tr>
+            <tr>
+              <td>Preço de oferta<br><small>Preço pedido na data/hora de captura</small></td>
+              <td>Não há anúncios auditados; o template está vazio.</td>
+              <td>Coleta própria ou fonte licenciada conforme legalidade/termos; arquivar URL, data, captura, preço, área declarada e evidências.</td>
+              <td>0 anúncios auditados.</td>
+              <td><span class="status-pill status-blocked">AUSENTE</span><br>Sem coleta nem validação.</td>
+              <td>Na operação, disponibilidade depende de fonte e regra de associação; não presumir que será reproduzível com os mesmos atributos.</td>
+              <td>Manter oferta separada de transação. Deduplicar, medir cobertura/viés e não aplicar redutor uniforme sem evidência.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-top:1rem">
+        <div class="card-title">Recomendação de composição e dados insuficientes</div>
+        <div class="deliverable-list">
+          <div class="deliverable-item"><strong>Alvos separados</strong><small>Manter versões/datasets distintos para transação ITBI, preço de oferta e avaliação. A referência atual continua apenas comparativa ITBI.</small></div>
+          <div class="deliverable-item"><strong>Modelo inicial verificável</strong><small>Usar somente atributos com definição, evidência e disponibilidade operacional compatíveis. Não incluir atributos apenas porque estão preenchidos.</small></div>
+          <div class="deliverable-item"><strong>Atributo ausente</strong><small>Preservar como ausente com motivo; não inventar valor. Aplicar somente política de fallback testada e registrar quando a cobertura/suporte for insuficiente.</small></div>
+          <div class="deliverable-item"><strong>Estimativas de quartos/banheiros</strong><small>Manter fora do modelo inicial. Se testadas depois, validar em amostra independente, comparar modelo com/sem estimativa e medir impacto do erro na precificação.</small></div>
+          <div class="deliverable-item"><strong>Oferta + transação</strong><small>Não juntar como um rótulo único sem desenho de calibração, deduplicação, datas, diferenças de cobertura e avaliação de viés documentados.</small></div>
+          <div class="deliverable-item"><strong>Compatibilidade operacional</strong><small>Para cada feature, demonstrar como será obtida na base de desenvolvimento e na OS/documentos CAIXA. Se não puder reproduzir, remover ou definir alternativa formalmente.</small></div>
+        </div>
+      </div>
+      <div class="doc-links"><a href="docs/diagnostico_tecnico_base.md" target="_blank" rel="noopener">Abrir diagnóstico técnico</a><a href="docs/mapa_origem_dados_avaliacao.md" target="_blank" rel="noopener">Abrir mapa de origem dos dados</a></div>
+    </div>
+
+    <div id="view-entrega" class="view">
+      <div class="topbar"><div><h1>Entregáveis CAIXA</h1><p>Checklist do Relatório do Modelo e evidências que ainda precisam ser fornecidas.</p></div></div>
+      <div class="card">
+        <div class="card-title">Checklist de prontidão</div>
+        <div class="deliverable-list">
+          <div class="deliverable-item"><strong><span class="status-pill status-pending">PREENCHER</span> Identificação e versão</strong><small>Empresa, CNPJ, contrato, responsáveis, datas, modelo, versão e vigência.</small></div>
+          <div class="deliverable-item"><strong><span class="status-pill status-evidence">EVIDÊNCIA PARCIAL</span> Origem e qualidade da base</strong><small>Fontes, natureza do alvo, período, cobertura, critérios de saneamento, duplicidades e rastreabilidade.</small></div>
+          <div class="deliverable-item"><strong><span class="status-pill status-evidence">FUNCIONALIDADE INCLUÍDA</span> Alvo e métricas</strong><small>A estrutura permite demonstrar o fluxo de cálculo e organizar as métricas por natureza do alvo. Transação, oferta e avaliação permanecem separadas; quando os dados complementares da CAIXA chegarem, serão incorporados para avaliar a operacionalidade do alvo de avaliação.</small></div>
+          <div class="deliverable-item"><strong><span class="status-pill status-pending">VALIDAR</span> Variáveis e geolocalização</strong><small>Definições, cobertura por atributo, evidência, associação à unidade/edifício e disponibilidade na OS.</small></div>
+          <div class="deliverable-item"><strong><span class="status-pill status-pending">DOCUMENTAR</span> Algoritmos e explicabilidade</strong><small>Bibliotecas/licenças, modelos testados, hiperparâmetros, contribuição e justificativa de escolha.</small></div>
+          <div class="deliverable-item"><strong><span class="status-pill status-blocked">EVIDÊNCIA DA EMPRESA</span> Infraestrutura e segurança</strong><small>Hospedagem existente, segregação, logs, backup/restauração, continuidade, segurança e LGPD.</small></div>
+          <div class="deliverable-item"><strong><span class="status-pill status-blocked">EVIDÊNCIA DA EMPRESA</span> IA para leitura de matrícula</strong><small>Ferramenta configurada, validação, taxa de acerto, exceções, guarda e segurança do documento.</small></div>
+          <div class="deliverable-item"><strong><span class="status-pill status-pending">DEFINIR</span> Monitoramento e reprodução</strong><small>Métricas/limites, atualização/versionamento, preservação de código, dados, dependências e artefatos.</small></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1rem">
+        <div class="card-title">Rascunho e documentação de apoio</div>
+        <p style="font-size:12px;color:var(--muted)">O rascunho reúne o estado conhecido do projeto e as pendências; os responsáveis técnicos devem conferir as evidências e completar o formulário oficial antes de qualquer assinatura.</p>
+        <div class="doc-links"><a href="docs/relatorio_modelo_caixa_rascunho.md" target="_blank" rel="noopener">Abrir rascunho do Relatório do Modelo</a><a href="docs/avaliacao_conformidade_caixa.md" target="_blank" rel="noopener">Abrir avaliação de conformidade</a><a href="docs/modelo_ofertas.md" target="_blank" rel="noopener">Abrir estratégia de ofertas</a></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         VIEW: REGIÕES
+    ══════════════════════════════════════════ -->
     <div id="view-regioes" class="view">
       <div class="topbar"><div><h1>Análise por Região</h1><p>Estatísticas do dataset de treinamento</p></div></div>
       <div class="region-grid" id="region-cards"></div>
@@ -531,8 +915,8 @@
       <div style="display:grid;gap:1rem;">
         <div class="card">
           <div class="card-title">Base URL</div>
-          <div class="api-url">http://localhost:8000</div>
-          <p style="font-size:13px;color:var(--muted);">Acesse <strong style="color:var(--accent)">http://localhost:8000/docs</strong> para o Swagger UI interativo gerado automaticamente pelo FastAPI.</p>
+          <div class="api-url">__API_BASE_URL__</div>
+          <p style="font-size:13px;color:var(--muted);">Acesse <strong style="color:var(--accent)">__API_BASE_URL__/docs</strong> para o Swagger UI interativo gerado automaticamente pelo FastAPI.</p>
         </div>
         <div class="card">
           <div class="card-title">Endpoints disponíveis</div>
@@ -540,41 +924,49 @@
             <thead><tr><th>Método</th><th>Rota</th><th>Descrição</th></tr></thead>
             <tbody>
               <tr><td><span class="tag" style="background:rgba(62,207,142,.15);color:var(--accent2);">GET</span></td><td style="font-family:monospace;">/</td><td>Health check</td></tr>
-              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/predict</td><td>Predição de um imóvel</td></tr>
-              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/predict/batch</td><td>Predição em lote (até 100)</td></tr>
-              <tr><td><span class="tag" style="background:rgba(62,207,142,.15);color:var(--accent2);">GET</span></td><td style="font-family:monospace;">/regioes/stats</td><td>Estatísticas por região</td></tr>
-              <tr><td><span class="tag" style="background:rgba(62,207,142,.15);color:var(--accent2);">GET</span></td><td style="font-family:monospace;">/modelo/info</td><td>Métricas e metadados do modelo</td></tr>
-              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/relatorio</td><td>Gerar relatório por região</td></tr>
+              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/referencia/estimativa</td><td>Referência comparativa de transações ITBI; não é oferta ou avaliação</td></tr>
+              <tr><td><span class="tag" style="background:rgba(62,207,142,.15);color:var(--accent2);">GET</span></td><td style="font-family:monospace;">/dados/catalogo</td><td>Catálogo de dados e métricas ITBI; não habilita previsão operacional</td></tr>
+              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/predict</td><td>Estimativa experimental do alvo 90% da oferta; não é avaliação CAIXA</td></tr>
+              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/predict/batch</td><td>Estimativas experimentais de até 500 apartamentos</td></tr>
+              <tr><td><span class="tag" style="background:rgba(91,143,255,.15);color:var(--accent);">POST</span></td><td style="font-family:monospace;">/predict/workbook</td><td>Dados manuais com download Excel no mesmo layout de saida do TESTE</td></tr>
+              <tr><td><span class="tag" style="background:rgba(245,166,35,.15);color:var(--warn);">GET</span></td><td style="font-family:monospace;">/modelo/info</td><td>Estado e métricas do AVM experimental; homologação permanece pendente</td></tr>
             </tbody>
           </table>
         </div>
         <div class="card">
+          <div class="card-title">Planilha de saida para preenchimento manual</div>
+          <p style="font-size:13px;color:var(--muted);">No Swagger, abra <strong>POST /predict/workbook</strong>, informe uma lista com os mesmos campos aceitos por <strong>/predict/batch</strong> e execute. A resposta e um arquivo Excel com as quatro colunas finais no layout do teste.</p>
+          <pre style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent2);background:var(--bg3);padding:1rem;border-radius:var(--radius-sm);overflow-x:auto;">curl -X POST '__API_BASE_URL__/predict/workbook?modelo=catboost' -H "Content-Type: application/json" -d '[{"area_privativa_m2":60,"idade_anos":10,"quartos":2,"banheiros":2,"vagas":1,"elevador":1,"area_total_m2":75,"distrito":"Cangaiba","cep":"01005"}]'</pre>
+        </div>
+        <div class="card">
           <div class="card-title">Exemplo — POST /predict</div>
-          <pre style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent2);background:var(--bg3);padding:1rem;border-radius:var(--radius-sm);overflow-x:auto;">curl -X POST http://localhost:8000/predict \
+          <pre style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent2);background:var(--bg3);padding:1rem;border-radius:var(--radius-sm);overflow-x:auto;">curl -X POST __API_BASE_URL__/predict \
   -H "Content-Type: application/json" \
   -d '{
-    "regiao":    "centro",
-    "area":      90,
-    "quartos":   3,
+    "area_privativa_m2": 60,
+    "idade_anos": 10,
+    "quartos": 2,
     "banheiros": 2,
-    "vagas":     1,
-    "idade":     5,
-    "suite":     1,
-    "sacada":    1,
-    "piscina":   0
+    "vagas": 1,
+    "elevador": 1,
+    "regiao": "Zona Leste",
+    "distrito": "Cangaíba"
   }'</pre>
         </div>
         <div class="card">
-          <div class="card-title">Exemplo — Resposta /predict</div>
-          <pre style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text);background:var(--bg3);padding:1rem;border-radius:var(--radius-sm);overflow-x:auto;" id="api-example-resp">{
-  "preco_estimado":   548320.00,
-  "intervalo_minimo": 493488.00,
-  "intervalo_maximo": 603152.00,
-  "preco_por_m2":     6092.44,
-  "regiao_nome":      "Centro",
-  "confianca":        "Alta",
-  "comparaveis": [...]
-}</pre>
+          <div class="card-title">Exemplo — POST /referencia/estimativa</div>
+          <pre style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent2);background:var(--bg3);padding:1rem;border-radius:var(--radius-sm);overflow-x:auto;">curl -X POST __API_BASE_URL__/referencia/estimativa \
+  -H "Content-Type: application/json" \
+  -d '{
+    "area_construida_iptu_m2": 85,
+    "cep": "01005",
+    "codigo_padrao_iptu": "22",
+    "confirmar_area_iptu": true
+  }'</pre>
+        </div>
+        <div class="card">
+          <div class="card-title">Interpretação</div>
+          <p style="font-size:13px;color:var(--muted);">Área e confirmação são obrigatórias. CEP e Código Padrão IPTU são opcionais; sem código, o sistema usa comparáveis do CEP somente quando houver ao menos 30 transações elegíveis, caso contrário recua ao perfil municipal. A resposta informa uma mediana comparativa e os percentis 10 e 90 dos preços unitários observados. A faixa não é intervalo de confiança individual. A área deve ser exatamente a Área Construída do cadastro IPTU, não área privativa nem área total. Não usar como avaliação CAIXA ou decisão de crédito.</p>
         </div>
       </div>
     </div>
@@ -582,163 +974,1310 @@
   </main>
 </div>
 
+<script src="./config.js"></script>
 <script>
 // ─── DADOS DE REFERÊNCIA — SÃO PAULO ────────────────────────────────────────
-const API = "http://localhost:8001";
-
-const DATASET = [
-  {regiao:'centro', area:85, quartos:3, banheiros:2, vagas:1, idade:5, suite:1, sacada:1, piscina:0, preco:880000},
-  {regiao:'centro', area:110,quartos:4, banheiros:3, vagas:2, idade:2, suite:2, sacada:1, piscina:0, preco:1450000},
-  {regiao:'centro', area:60, quartos:2, banheiros:1, vagas:1, idade:15,suite:0, sacada:0, piscina:0, preco:620000},
-  {regiao:'centro', area:140,quartos:4, banheiros:3, vagas:2, idade:8, suite:2, sacada:1, piscina:1, preco:2150000},
-  {regiao:'centro', area:75, quartos:3, banheiros:2, vagas:1, idade:10,suite:1, sacada:0, piscina:0, preco:760000},
-  {regiao:'centro', area:95, quartos:3, banheiros:2, vagas:2, idade:3, suite:1, sacada:1, piscina:0, preco:1180000},
-  {regiao:'america',area:90, quartos:3, banheiros:2, vagas:2, idade:3, suite:1, sacada:1, piscina:0, preco:960000},
-  {regiao:'america',area:70, quartos:2, banheiros:2, vagas:1, idade:10,suite:1, sacada:0, piscina:0, preco:680000},
-  {regiao:'america',area:120,quartos:4, banheiros:3, vagas:2, idade:1, suite:2, sacada:1, piscina:0, preco:1650000},
-  {regiao:'america',area:55, quartos:2, banheiros:1, vagas:0, idade:20,suite:0, sacada:0, piscina:0, preco:420000},
-  {regiao:'anita',  area:75, quartos:3, banheiros:2, vagas:1, idade:7, suite:1, sacada:0, piscina:0, preco:720000},
-  {regiao:'anita',  area:100,quartos:3, banheiros:2, vagas:2, idade:4, suite:1, sacada:1, piscina:0, preco:980000},
-  {regiao:'anita',  area:50, quartos:2, banheiros:1, vagas:0, idade:18,suite:0, sacada:0, piscina:0, preco:390000},
-  {regiao:'anita',  area:130,quartos:4, banheiros:3, vagas:2, idade:6, suite:2, sacada:1, piscina:0, preco:1520000},
-  {regiao:'norte',  area:80, quartos:3, banheiros:2, vagas:1, idade:12,suite:1, sacada:0, piscina:0, preco:690000},
-  {regiao:'norte',  area:95, quartos:3, banheiros:2, vagas:2, idade:8, suite:1, sacada:1, piscina:0, preco:860000},
-  {regiao:'norte',  area:60, quartos:2, banheiros:1, vagas:1, idade:20,suite:0, sacada:0, piscina:0, preco:420000},
-  {regiao:'norte',  area:115,quartos:4, banheiros:3, vagas:2, idade:3, suite:2, sacada:1, piscina:0, preco:1180000},
-  {regiao:'sul',    area:80, quartos:3, banheiros:2, vagas:1, idade:9, suite:1, sacada:0, piscina:0, preco:925000},
-  {regiao:'sul',    area:100,quartos:3, banheiros:2, vagas:2, idade:5, suite:1, sacada:1, piscina:0, preco:1360000},
-  {regiao:'sul',    area:65, quartos:2, banheiros:1, vagas:0, idade:15,suite:0, sacada:0, piscina:0, preco:510000},
-  {regiao:'sul',    area:120,quartos:4, banheiros:3, vagas:2, idade:2, suite:2, sacada:1, piscina:1, preco:1880000},
-];
-
-// Coeficientes da Regressão Ridge — referência São Paulo
-const COEF = {
-  intercept: 180000,
-  area: 4200, quartos: 18000, banheiros: 14000, vagas: 24000,
-  idade: -4500, suite: 22000, sacada: 16000, piscina: 42000,
-  area_por_quarto: 260, luxo_score: 6000,
-  centro: 260000, america: 180000, anita: 90000, norte: -50000, sul: 120000,
-};
-
-const NOMES = {centro:'Centro',america:'Zona Leste',anita:'Zona Oeste',norte:'Zona Norte',sul:'Zona Sul'};
-const CORES  = {centro:'#5b8fff',america:'#3ecf8e',anita:'#f5a623',norte:'#e8825a',sul:'#a78bfa'};
-
-const META = {
-  metricas:{
-    linear:           {mae:25759,rmse:32832,r2:0.9507,mape:9.57,cv_r2:0.9344},
-    random_forest:    {mae:62545,rmse:80682,r2:0.7024,mape:19.27,cv_r2:0.7376},
-    gradient_boosting:{mae:45300,rmse:77788,r2:0.7234,mape:11.54,cv_r2:0.8806},
-  },
-  importancias:{
-    random_forest:{area:0.512,regiao_centro:0.121,idade:0.089,vagas:0.078,quartos:0.062,
-      luxo_score:0.055,area_por_quarto:0.041,suite:0.024,regiao_america:0.018}
-  }
-};
+const API = (window.API_BASE_URL || "http://localhost:8001").replace(/\/+$/, "");
+const apiBaseDisplay = document.querySelector('.api-url');
+if (apiBaseDisplay) apiBaseDisplay.textContent = API;
+const apiDocsDisplay = document.querySelector('#view-api .card strong');
+if (apiDocsDisplay) apiDocsDisplay.textContent = ${API}/docs;
+document.querySelectorAll('#view-api pre').forEach(pre => { pre.textContent = pre.textContent.replaceAll('__API_BASE_URL__', API); });
+function avmModelQuery() {
+  const model = G('avm-model-select').value;
+  return model ? `?modelo=${encodeURIComponent(model)}` : '';
+}
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 const fmt  = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
-const fmtK = v => 'R$ ' + (Math.round(v/1000)) + 'k';
-
-function sv(inpId, outId, suf) {
-  document.getElementById(outId).textContent = document.getElementById(inpId).value + suf;
-}
 
 function G(id) { return document.getElementById(id); }
 
-function bonusRua(d) {
-  const texto = (d.rua || '').trim().toLowerCase();
-  if (!texto) return 0;
-
-  if (['paulista','faria lima','cerqueira','jardins','pinheiros','morumbi','itasim','brooklin'].some(tok => texto.includes(tok))) return 180000;
-  if (['mooca','tatuape','penha','sao mateus','gomes cardim','santo amaro'].some(tok => texto.includes(tok))) return -40000;
-  if (['sé','se','centro','republica','liberdade','cambuci','jabaquara'].some(tok => texto.includes(tok))) return 50000;
-  if (['perdizes','saude','vila madalena','bela vista','santa cecilia'].some(tok => texto.includes(tok))) return 70000;
-  return 0;
+function numeroOpcional(id) {
+  const value = G(id).value.trim();
+  if (!value) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
-function predLocal(d) {
-  const luxo = d.suite + d.sacada + d.piscina * 2;
-  const aq   = d.area / Math.max(d.quartos, 1);
-  let p = COEF.intercept
-    + COEF.area * d.area
-    + COEF.quartos * d.quartos
-    + COEF.banheiros * d.banheiros
-    + COEF.vagas * d.vagas
-    + COEF.idade * d.idade
-    + COEF.suite * d.suite
-    + COEF.sacada * d.sacada
-    + COEF.piscina * d.piscina
-    + COEF.area_por_quarto * aq
-    + COEF.luxo_score * luxo
-    + (COEF[d.regiao] || 0)
-    + bonusRua(d);
-  return Math.max(p, 80000);
+const AVM_REGION_MAP_CENTERS = {
+  Centro: [-23.5505, -46.6333],
+  'Zona Leste': [-23.548, -46.48],
+  'Zona Leste²': [-23.56, -46.4],
+  'Zona Norte': [-23.47, -46.63],
+  'Zona Oeste': [-23.56, -46.72],
+  'Zona Sul': [-23.68, -46.63],
+};
+let avmRegionMap = null;
+let avmRegionMarkers = new Map();
+let avmRegionMetrics = null;
+
+function corAvmMape(mape) {
+  if (!Number.isFinite(Number(mape))) return '#7a7f96';
+  if (Number(mape) <= 15) return '#3ecf8e';
+  if (Number(mape) <= 20) return '#5b8fff';
+  return '#f5a623';
+}
+
+function selecionarRegiaoAvm(regiao) {
+  const select = G('avm-regiao');
+  if (!Array.from(select.options).some(option => option.value === regiao)) return;
+  select.value = regiao;
+  sincronizarMapaRegiaoAvm();
+}
+
+function sincronizarMapaRegiaoAvm() {
+  const selectedRegion = G('avm-regiao').value;
+  avmRegionMarkers.forEach((marker, region) => {
+    const selected = region === selectedRegion;
+    marker.setStyle({
+      color: selected ? '#ffffff' : corAvmMape(avmRegionMetrics?.[region]?.mape_percent),
+      weight: selected ? 4 : 2,
+      fillOpacity: selected ? 0.9 : 0.68,
+    });
+    const baseRadius = Math.min(28, 10 + Math.sqrt(Number(avmRegionMetrics?.[region]?.n || 0)));
+    marker.setRadius(baseRadius + (selected ? 3 : 0));
+  });
+  document.querySelectorAll('.avm-region-item').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.region === selectedRegion));
+  });
+}
+
+function selecionarRegiaoNoMapa(regiao) {
+  selecionarRegiaoAvm(regiao);
+  const marker = avmRegionMarkers.get(regiao);
+  if (marker && avmRegionMap) {
+    avmRegionMap.panTo(marker.getLatLng());
+    marker.openTooltip();
+  }
+}
+
+function renderListaRegioesAvm(containerId, regions, maximumMape) {
+  const container = G(containerId);
+  container.replaceChildren();
+  regions.forEach(([region, metrics]) => {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'avm-region-item';
+    row.dataset.region = region;
+    row.setAttribute('aria-pressed', 'false');
+    row.setAttribute(
+      'aria-label',
+      `${region}: MAPE ${formatAvmMetric(metrics.mape_percent, 2)}%, ${Number(metrics.n).toLocaleString('pt-BR')} imóveis no teste. Selecionar região.`
+    );
+    row.addEventListener('click', () => selecionarRegiaoNoMapa(region));
+
+    const name = document.createElement('span');
+    name.className = 'avm-region-name';
+    name.textContent = region;
+    const track = document.createElement('span');
+    track.className = 'avm-region-track';
+    const bar = document.createElement('span');
+    bar.className = 'avm-region-bar';
+    bar.style.width = `${Math.max(3, Math.min(100, Number(metrics.mape_percent) / maximumMape * 100))}%`;
+    bar.style.backgroundColor = corAvmMape(metrics.mape_percent);
+    track.appendChild(bar);
+    const value = document.createElement('span');
+    value.className = 'avm-region-value';
+    value.textContent = `${formatAvmMetric(metrics.mape_percent, 1)}%`;
+    row.append(name, track, value);
+    container.appendChild(row);
+  });
+}
+
+function renderMapaRegioesAvm(regions) {
+  const status = G('avm-map-status');
+  if (!window.L) {
+    status.textContent = 'A biblioteca do mapa não carregou. Verifique a conexão e recarregue a página.';
+    return;
+  }
+  if (!regions || typeof regions !== 'object') {
+    status.textContent = 'Métricas regionais não disponíveis na API.';
+    return;
+  }
+  const knownRegions = Object.entries(regions).filter(([region, metrics]) =>
+    AVM_REGION_MAP_CENTERS[region] &&
+    Number.isFinite(Number(metrics?.n)) &&
+    Number.isFinite(Number(metrics?.mape_percent))
+  );
+  if (!knownRegions.length) {
+    status.textContent = 'O relatório não contém métricas geográficas válidas para o mapa.';
+    return;
+  }
+
+  avmRegionMetrics = Object.fromEntries(knownRegions);
+  if (!avmRegionMap) {
+    avmRegionMap = L.map('avm-region-map', {scrollWheelZoom: false}).setView([-23.56, -46.58], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+    }).addTo(avmRegionMap);
+  }
+
+  avmRegionMarkers.forEach(marker => marker.remove());
+  avmRegionMarkers = new Map();
+  const maximumSample = Math.max(...knownRegions.map(([, metrics]) => Number(metrics.n)));
+  const bounds = [];
+  knownRegions.forEach(([region, metrics]) => {
+    const center = AVM_REGION_MAP_CENTERS[region];
+    const color = corAvmMape(metrics.mape_percent);
+    const marker = L.circleMarker(center, {
+      radius: Math.min(28, 10 + Math.sqrt(Number(metrics.n))),
+      color,
+      weight: 2,
+      fillColor: color,
+      fillOpacity: 0.68,
+    }).addTo(avmRegionMap);
+    marker.bindTooltip(
+      `${region}: MAPE ${formatAvmMetric(metrics.mape_percent, 2)}% · ${Number(metrics.n).toLocaleString('pt-BR')} imóveis`
+    );
+    marker.on('click', () => selecionarRegiaoAvm(region));
+    avmRegionMarkers.set(region, marker);
+    bounds.push(center);
+  });
+  if (bounds.length > 1) avmRegionMap.fitBounds(bounds, {padding: [55, 55]});
+  else avmRegionMap.setView(bounds[0], 11);
+
+  const byError = [...knownRegions].sort((left, right) =>
+    Number(right[1].mape_percent) - Number(left[1].mape_percent)
+  );
+  const maximumMape = Math.max(...knownRegions.map(([, metrics]) => Number(metrics.mape_percent)), 1);
+  renderListaRegioesAvm('avm-regions-high', byError.slice(0, 3), maximumMape);
+  renderListaRegioesAvm('avm-regions-low', [...byError].reverse().slice(0, 3), maximumMape);
+  status.textContent =
+    `Teste geográfico independente · ${knownRegions.length} regiões · ` +
+    `tamanho dos círculos proporcional à amostra (máximo ${maximumSample.toLocaleString('pt-BR')}). ` +
+    'Pontos representam referências aproximadas de região, não imóveis nem limites oficiais.';
+  sincronizarMapaRegiaoAvm();
+  window.setTimeout(() => avmRegionMap.invalidateSize(), 100);
+}
+
+async function loadAvmRegionMap() {
+  if (!window.L) {
+    G('avm-map-status').textContent = 'A biblioteca do mapa não carregou. Verifique a conexão e recarregue a página.';
+    return;
+  }
+  try {
+    const response = await fetch(`${API}/modelo/info`);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || `HTTP ${response.status}`);
+    renderMapaRegioesAvm(result.avm_oferta_experimental?.metricas_por_regiao);
+  } catch (requestError) {
+    G('avm-map-status').textContent = requestError instanceof TypeError
+      ? 'Não foi possível conectar à API para carregar as métricas regionais.'
+      : requestError instanceof Error ? requestError.message : 'Falha ao carregar o mapa regional.';
+  }
+}
+
+const AVM_UPLOAD_FIELDS = [
+  'area_privativa_m2',
+  'idade_anos',
+  'valor_oferta_brl',
+  'quartos',
+  'banheiros',
+  'vagas',
+  'elevador',
+  'area_total_m2',
+  'renda_mediana_mensal_brl',
+  'renda_media_mensal_brl',
+  'cep',
+  'regiao',
+  'distrito',
+  'setor_censitario',
+  'padrao_iptu',
+];
+const AVM_REGION_OPTIONS = new Set([
+  'Centro', 'Zona Leste', 'Zona Leste²', 'Zona Norte', 'Zona Oeste', 'Zona Sul',
+]);
+const AVM_UPLOAD_HEADER_ALIASES = {
+  area_priv: 'area_privativa_m2',
+  idade: 'idade_anos',
+  area_total: 'area_total_m2',
+  valor_oferta: 'valor_oferta_brl',
+  oferta: 'valor_oferta_brl',
+  valor_oferta_r: 'valor_oferta_brl',
+  preco_oferta: 'valor_oferta_brl',
+  preco_de_oferta: 'valor_oferta_brl',
+  preco_anunciado: 'valor_oferta_brl',
+  oferta_r: 'valor_oferta_brl',
+  renda_mediana_ibge_2022_r: 'renda_mediana_mensal_brl',
+  renda_media_ibge_2022_r: 'renda_media_mensal_brl',
+  setor_censitario_2022: 'setor_censitario',
+};
+let avmUploadObjectUrls = [];
+
+function normalizarCabecalhoAvm(header) {
+  const normalized = String(header).normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return AVM_UPLOAD_HEADER_ALIASES[normalized] || normalized;
+}
+
+function normalizarLinhaAvm(row) {
+  return Object.fromEntries(Object.entries(row).map(([header, value]) => [
+    normalizarCabecalhoAvm(header),
+    value,
+  ]));
+}
+
+function lerTabelaAvm(sheet) {
+  const matrix = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: '', raw: true});
+  const headerIndex = matrix.findIndex(row => {
+    const headers = row.map(normalizarCabecalhoAvm);
+    return (headers.includes('area_privativa_m2') && headers.includes('idade_anos')) ||
+      headers.includes('valor_oferta_brl') ||
+      (headers.includes('area_privativa_m') && headers.includes('ano_da_construcao_averbacao'));
+  });
+  if (headerIndex < 0) return null;
+
+  const headers = matrix[headerIndex].map(normalizarCabecalhoAvm);
+  const comparisonForm = headers.includes('area_privativa_m') && headers.includes('ano_da_construcao_averbacao');
+  const rows = matrix.slice(headerIndex + 1).map((values, index) => {
+    const row = Object.fromEntries(headers.map((header, column) => [header, values[column] ?? '']));
+    row.__sourceExcelRow = headerIndex + index + 2;
+    if (comparisonForm) {
+      const year = numeroPlanilha(row.ano_da_construcao_averbacao, 'ano_da_construcao_averbacao');
+      const currentYear = new Date().getFullYear();
+      const informado = value => {
+        if (typeof value !== 'string') return value;
+        const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+        return ['nao informado', 'n/i', 'n.a.', '-'].includes(normalized) ? '' : value;
+      };
+      return {
+        ...row,
+        area_privativa_m2: row.area_privativa_m,
+        idade_anos: year !== null && Number.isFinite(year) ? currentYear - year : '',
+        quartos: informado(row.dormitorios),
+        banheiros: informado(row.banheiros),
+        vagas: informado(row.vagas_de_garagem),
+        elevador: informado(row.elevador),
+        area_total_m2: row.area_total_m,
+        distrito: row.bairro_subdistrito,
+      };
+    }
+    return row;
+  }).filter(row => fileHasData(row));
+  return {rows, headerRow: headerIndex + 1, comparisonForm};
+}
+
+function valorCelula(row, field) {
+  return Object.hasOwn(row, field) ? row[field] : '';
+}
+
+function numeroPlanilha(value, field) {
+  if (value === '' || value === null || value === undefined) return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+  const text = String(value).trim().replace(/\s/g, '').replace(/^R\$/i, '');
+  if (!text) return null;
+  const comma = text.lastIndexOf(',');
+  const dot = text.lastIndexOf('.');
+  let normalized = text;
+  if (comma >= 0 && dot >= 0) {
+    normalized = comma > dot ? text.replace(/\./g, '').replace(',', '.') : text.replace(/,/g, '');
+  } else if (comma >= 0) {
+    normalized = text.replace(',', '.');
+  }
+  const number = Number(normalized);
+  return Number.isFinite(number) ? number : NaN;
+}
+
+function validarLinhaAvm(row) {
+  const rawOffer = valorCelula(row, 'valor_oferta_brl');
+  const offer = numeroPlanilha(rawOffer, 'valor_oferta_brl');
+  if (offer !== null && Number.isFinite(offer) && offer > 0) {
+    return {payload: {valor_oferta_brl: offer}, errors: [], directOffer: true};
+  }
+  const payload = {};
+  const errors = [];
+  if (rawOffer !== '' && rawOffer !== null && rawOffer !== undefined) {
+    errors.push('valor_oferta_brl invÃ¡lido; informe um valor positivo ou deixe o campo vazio para usar o AVM');
+  }
+  const numericFields = {
+    area_privativa_m2: {required: true, min: 35, max: 1000},
+    idade_anos: {required: true, min: 0, max: 20, integer: true},
+    valor_oferta_brl: {min: Number.MIN_VALUE},
+    quartos: {min: 0, max: 10, integer: true},
+    banheiros: {min: 0, max: 10, integer: true},
+    vagas: {min: 0, max: 10, integer: true},
+    elevador: {min: 0, max: 1, integer: true},
+    area_total_m2: {min: Number.MIN_VALUE, max: 2000},
+    renda_mediana_mensal_brl: {min: Number.MIN_VALUE},
+    renda_media_mensal_brl: {min: Number.MIN_VALUE},
+  };
+  Object.entries(numericFields).forEach(([field, rules]) => {
+    const raw = valorCelula(row, field);
+    const value = numeroPlanilha(raw, field);
+    if (value === null) {
+      if (rules.required) errors.push(`${field} obrigatório`);
+      else payload[field] = null;
+      return;
+    }
+    if (!Number.isFinite(value)) {
+      errors.push(`${field} inválido`);
+      return;
+    }
+    if (value < rules.min || (rules.max !== undefined && value > rules.max)) {
+      errors.push(`${field} fora do intervalo permitido`);
+      return;
+    }
+    if (rules.integer && !Number.isInteger(value)) {
+      errors.push(`${field} deve ser inteiro`);
+      return;
+    }
+    payload[field] = value;
+  });
+
+  AVM_UPLOAD_FIELDS.filter(field => !Object.hasOwn(numericFields, field)).forEach(field => {
+    const raw = valorCelula(row, field);
+    const value = raw === null || raw === undefined ? '' : String(raw).trim();
+    if (field === 'cep') {
+      if (!value) {
+        payload.cep = null;
+      } else {
+        const digits = value.replace(/\D/g, '');
+        const normalizedCep = digits.length === 7 ? digits.padStart(8, '0') : digits;
+        if (![5, 8].includes(normalizedCep.length)) errors.push('cep deve ter 5 ou 8 dígitos');
+        else payload.cep = normalizedCep;
+      }
+    } else if (field === 'regiao') {
+      if (!value) {
+        payload.regiao = null;
+      } else if (!AVM_REGION_OPTIONS.has(value)) {
+        errors.push('regiao não reconhecida');
+      } else {
+        payload.regiao = value;
+      }
+    } else {
+      const maxLength = field === 'distrito' ? 100 : field === 'setor_censitario' ? 30 : 20;
+      if (value.length > maxLength) errors.push(`${field} excede ${maxLength} caracteres`);
+      else payload[field] = value || null;
+    }
+  });
+  return {payload, errors};
+}
+
+function fileHasData(row) {
+  return Object.entries(row).some(([key, value]) =>
+    !key.startsWith('__') && value !== '' && value !== null && value !== undefined
+  );
+}
+
+const AVM_OUTPUT_HEADERS = [
+  'Valor estimado (R$)',
+  'Valor unitário (R$/m²)',
+  'Metodologia',
+  'Observações',
+];
+const AVM_OUTPUT_HEADER_ALIASES = [
+  new Set(['valor_estimado', 'valor_estimado_r', 'estimativa_alvo_brl']),
+  new Set(['valor_unitario', 'valor_unitario_r_m', 'valor_unitario_r_m_area_privativa', 'valor_unitario_r_m_de_area_privativa', 'valor_unitario_brl_m2']),
+  new Set(['metodologia']),
+  new Set(['observacoes']),
+];
+
+function construirArquivoResultado(fileName, rows, statusByRow, sourceWorkbook, tableInfo) {
+  const workbook = sourceWorkbook;
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const headerCells = XLSX.utils.sheet_to_json(sheet, {
+    header: 1, range: tableInfo.headerRow - 1, defval: '', raw: true,
+  })[0] || [];
+  const normalizedHeaders = headerCells.map(normalizarCabecalhoAvm);
+  let outputColumns = null;
+  if (AVM_OUTPUT_HEADER_ALIASES.every(aliases => normalizedHeaders.some(header => aliases.has(header)))) {
+    outputColumns = AVM_OUTPUT_HEADER_ALIASES.map(aliases => normalizedHeaders.findIndex(header => aliases.has(header)));
+  } else {
+    const used = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+    const firstColumn = used.e.c + 1;
+    outputColumns = AVM_OUTPUT_HEADERS.map((_, index) => firstColumn + index);
+    AVM_OUTPUT_HEADERS.forEach((label, index) => {
+      const address = XLSX.utils.encode_cell({r: tableInfo.headerRow - 1, c: outputColumns[index]});
+      sheet[address] = {t: 's', v: label};
+    });
+    used.e.c = firstColumn + AVM_OUTPUT_HEADERS.length - 1;
+    sheet['!ref'] = XLSX.utils.encode_range(used);
+  }
+
+  rows.forEach((row, index) => {
+    const status = statusByRow[index];
+    const excelRow = (row.__sourceExcelRow || index + 2) - 1;
+    const area = status.payload?.area_privativa_m2 ?? status.areaForOutput;
+    const values = [
+      status.prediction ?? '',
+      status.prediction != null && area > 0 ? Math.round((status.prediction / area) * 100) / 100 : '',
+      status.methodology || (status.prediction != null ? 'AVM experimental' : 'Não estimado pelo modelo'),
+      status.error || (status.status === 'calculado \u00b7 oferta \u00d7 0,9'
+        ? 'Cálculo direto: 90% da oferta informada. Não é avaliação independente de mercado/CAIXA.'
+        : 'Estimativa experimental do alvo 90% do preço de oferta; não é avaliação de mercado/CAIXA.'),
+    ];
+    values.forEach((value, columnIndex) => {
+      const address = XLSX.utils.encode_cell({r: excelRow, c: outputColumns[columnIndex]});
+      sheet[address] = typeof value === 'number' ? {t: 'n', v: value} : {t: 's', v: String(value)};
+    });
+  });
+
+  const file = new Blob(
+    [XLSX.write(workbook, {bookType: 'xlsx', type: 'array'})],
+    {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}
+  );
+  return {
+    downloadUrl: URL.createObjectURL(file),
+    downloadName: `${fileName.replace(/\.xlsx$/i, '')}_estimativas.xlsx`,
+  };
+}
+
+function inserirCelulaTabela(cell, value) {
+  const td = document.createElement('td');
+  td.textContent = value;
+  cell.appendChild(td);
+}
+
+function renderResultadoUploadsAvm(fileResults) {
+  const results = G('avm-xlsx-results');
+  const summary = G('avm-xlsx-summary');
+  const table = G('avm-xlsx-table');
+  table.replaceChildren();
+  results.style.display = 'block';
+  const totals = fileResults.reduce((acc, item) => {
+    acc.valid += item.validRows;
+    acc.invalid += item.invalidRows;
+    acc.filesOk += Number(item.downloaded);
+    acc.filesFailed += Number(!item.downloaded);
+    return acc;
+  }, {valid: 0, invalid: 0, filesOk: 0, filesFailed: 0});
+  summary.textContent =
+    `${fileResults.length} arquivo(s) · ${totals.filesOk} processado(s) · ${totals.filesFailed} com falha · ` +
+    `${totals.valid} linha(s) estimada(s) · ${totals.invalid} linha(s) com erro preservada(s) nos resultados.`;
+
+  const header = table.createTHead().insertRow();
+  ['Arquivo', 'Linhas estimadas', 'Linhas com erro', 'Situação / resultado'].forEach(label => {
+    const th = document.createElement('th');
+    th.textContent = label;
+    header.appendChild(th);
+  });
+  const body = table.createTBody();
+  fileResults.forEach(item => {
+    const row = body.insertRow();
+    inserirCelulaTabela(row, item.fileName);
+    inserirCelulaTabela(row, String(item.validRows));
+    inserirCelulaTabela(row, String(item.invalidRows));
+    const resultCell = row.insertCell();
+    if (item.downloaded) {
+      const link = document.createElement('a');
+      link.className = 'avm-download';
+      link.href = item.downloadUrl;
+      link.download = item.downloadName;
+      link.textContent = 'Baixar planilha com estimativas';
+      resultCell.appendChild(link);
+      if (item.error) {
+        const note = document.createElement('small');
+        note.style.display = 'block';
+        note.style.color = 'var(--warn)';
+        note.textContent = item.error;
+        resultCell.appendChild(note);
+      }
+    } else {
+      resultCell.textContent = item.error;
+    }
+  });
+}
+
+async function respostaJsonAvm(response, fallbackMessage) {
+  let body;
+  try {
+    body = await response.json();
+  } catch {
+    throw new Error(`A API respondeu em formato inválido (HTTP ${response.status}).`);
+  }
+  if (!response.ok) {
+    throw new Error(typeof body.detail === 'string' ? body.detail : fallbackMessage);
+  }
+  return body;
+}
+
+async function salvarLinhasImportacaoAvm(importId, rows) {
+  const response = await fetch(`${API}/avm/imports/${encodeURIComponent(importId)}/rows`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(rows),
+  });
+  await respostaJsonAvm(response, 'Não foi possível salvar as linhas no banco configurado.');
+}
+
+async function finalizarImportacaoAvm(importId, status, error = null) {
+  const response = await fetch(`${API}/avm/imports/${encodeURIComponent(importId)}`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({status, error}),
+  });
+  await respostaJsonAvm(response, 'Não foi possível finalizar o registro no banco configurado.');
+}
+
+async function baixarImportacaoAvm(item) {
+  const rows = [];
+  for (let offset = 0; offset < item.processed_rows; offset += 500) {
+    const response = await fetch(
+      `${API}/avm/imports/${encodeURIComponent(item.id)}/rows?offset=${offset}&limit=500`,
+    );
+    const body = await respostaJsonAvm(response, 'Não foi possível recuperar as linhas do banco configurado.');
+    rows.push(...body.rows);
+  }
+  if (rows.length !== item.processed_rows) {
+    throw new Error('O banco configurado retornou uma quantidade incompleta de linhas.');
+  }
+  const outputRows = rows.map(row => ({
+    ...row.source_data,
+    estimativa_alvo_brl: row.prediction ?? '',
+    status_processamento: row.status,
+    erro_processamento: row.error || '',
+  }));
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(outputRows), 'Resultado AVM');
+  const blob = new Blob(
+    [XLSX.write(workbook, {bookType: 'xlsx', type: 'array'})],
+    {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'},
+  );
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${item.file_name.replace(/\.xlsx$/i, '')}_banco_avm.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+function renderHistoricoAvm(imports) {
+  const table = G('avm-import-history-table');
+  table.replaceChildren();
+  const header = table.createTHead().insertRow();
+  ['Arquivo', 'Modelo', 'Linhas salvas', 'Estimadas', 'Com erro', 'Estado', 'Ações'].forEach(label => {
+    const th = document.createElement('th');
+    th.textContent = label;
+    header.appendChild(th);
+  });
+  const body = table.createTBody();
+  if (!imports.length) {
+    const row = body.insertRow();
+    const cell = row.insertCell();
+    cell.colSpan = 7;
+    cell.textContent = 'Nenhum arquivo armazenado ainda.';
+    return;
+  }
+  imports.forEach(item => {
+    const row = body.insertRow();
+    [
+      item.file_name,
+      item.model,
+      `${item.processed_rows}/${item.total_rows}`,
+      String(item.predicted_rows),
+      String(item.error_rows),
+      item.status,
+    ].forEach(value => { row.insertCell().textContent = value; });
+    const actionCell = row.insertCell();
+    const downloadButton = document.createElement('button');
+    downloadButton.className = 'btn btn-ghost';
+    downloadButton.type = 'button';
+    downloadButton.textContent = 'Baixar';
+    downloadButton.disabled = item.processed_rows === 0;
+    downloadButton.addEventListener('click', async () => {
+      downloadButton.disabled = true;
+      try {
+        await baixarImportacaoAvm(item);
+      } catch (requestError) {
+        G('avm-import-history-message').textContent =
+          requestError instanceof Error ? requestError.message : 'Falha ao baixar a importação do banco configurado.';
+      } finally {
+        downloadButton.disabled = item.processed_rows === 0;
+      }
+    });
+    actionCell.appendChild(downloadButton);
+    const removeButton = document.createElement('button');
+    removeButton.className = 'btn btn-ghost';
+    removeButton.type = 'button';
+    removeButton.textContent = 'Excluir';
+    removeButton.addEventListener('click', async () => {
+      if (!confirm(`Excluir "${item.file_name}" e todos os seus registros do banco configurado?`)) return;
+      removeButton.disabled = true;
+      try {
+        const response = await fetch(`${API}/avm/imports/${encodeURIComponent(item.id)}`, {
+          method: 'DELETE',
+        });
+        await respostaJsonAvm(response, 'Não foi possível excluir a importação.');
+        await carregarHistoricoAvm();
+      } catch (requestError) {
+        G('avm-import-history-message').textContent =
+          requestError instanceof Error ? requestError.message : 'Falha ao excluir o arquivo do banco configurado.';
+        removeButton.disabled = false;
+      }
+    });
+    actionCell.appendChild(document.createTextNode(' '));
+    actionCell.appendChild(removeButton);
+  });
+}
+
+async function carregarHistoricoAvm() {
+  const message = G('avm-import-history-message');
+  message.textContent = 'Carregando importações salvas…';
+  try {
+    const response = await fetch(`${API}/avm/imports?limit=50`);
+    const body = await respostaJsonAvm(response, 'Não foi possível carregar o histórico local.');
+    renderHistoricoAvm(body.imports || []);
+    const databaseLabel = body.database === 'postgresql' ? 'PostgreSQL' : 'SQLite local';
+    G('avm-database-label').textContent = databaseLabel;
+    message.textContent = `${(body.imports || []).length} importação(ões) mais recente(s) no ${databaseLabel}.`;
+  } catch (requestError) {
+    message.textContent = requestError instanceof Error
+      ? requestError.message
+      : 'Falha ao consultar o banco configurado pela API.';
+  }
+}
+
+async function processarArquivoAvm(file) {
+  const result = {
+    fileName: file.name,
+    validRows: 0,
+    invalidRows: 0,
+    downloaded: false,
+    error: '',
+    downloadUrl: null,
+  };
+  if (!/\.xlsx$/i.test(file.name)) {
+    result.error = 'Formato inválido; selecione um arquivo .xlsx.';
+    return result;
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    result.error = 'Arquivo excede o limite de 20 MB.';
+    return result;
+  }
+  if (!window.XLSX) {
+    result.error = 'Leitor XLSX indisponível; verifique a conexão e recarregue a página.';
+    return result;
+  }
+
+  let workbook;
+  try {
+    workbook = XLSX.read(await file.arrayBuffer(), {type: 'array', cellStyles: true});
+  } catch {
+    result.error = 'Não foi possível ler o arquivo; os outros arquivos selecionados continuarão.';
+    return result;
+  }
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!sheet) {
+    result.error = 'A planilha não contém uma aba de dados.';
+    return result;
+  }
+  const tableInfo = lerTabelaAvm(sheet);
+  if (!tableInfo || !tableInfo.rows.length) {
+    result.error = 'A primeira aba has no recognized table or data rows.';
+    return result;
+  }
+  const sourceRows = tableInfo.rows;
+  const rawRows = sourceRows;
+  if (rawRows.length > 50000) {
+    result.error = 'Planilha excede o limite de 50.000 linhas.';
+    return result;
+  }
+  const statuses = sourceRows.map(row => {
+    const normalizedRow = normalizarLinhaAvm(row);
+    const validation = validarLinhaAvm(normalizedRow);
+    const sourceArea = numeroPlanilha(normalizedRow.area_privativa_m2, 'area_privativa_m2');
+    if (validation.errors.length) {
+      result.invalidRows += 1;
+      const missingAgeNote = tableInfo.comparisonForm && row.idade_anos === ''
+        ? 'Ano da construcao nao informado; idade exigida pelo modelo nao pode ser calculada.'
+        : '';
+      return {
+        status: 'erro de validação',
+        error: [missingAgeNote, ...validation.errors].filter(Boolean).join('; '),
+        prediction: null,
+      };
+    }
+    return {
+      status: 'aguardando previsão', error: '', payload: validation.payload, prediction: null,
+      areaForOutput: Number.isFinite(sourceArea) && sourceArea > 0 ? sourceArea : null,
+    };
+  });
+
+  const importResponse = await fetch(`${API}/avm/imports`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      file_name: file.name,
+      model: G('avm-model-select').value || 'xgboost',
+      total_rows: sourceRows.length,
+    }),
+  });
+  const imported = await respostaJsonAvm(importResponse, 'Não foi possível registrar o arquivo no banco configurado.');
+  result.importId = imported.id;
+
+  try {
+  for (let start = 0; start < statuses.length; start += 500) {
+    const end = Math.min(start + 500, statuses.length);
+    const indexes = [];
+    for (let index = start; index < end; index += 1) {
+      if (statuses[index].payload) indexes.push(index);
+    }
+    if (indexes.length) try {
+      const response = await fetch(`${API}/predict/batch${avmModelQuery()}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(indexes.map(index => statuses[index].payload)),
+      });
+      const body = await respostaJsonAvm(response, 'Não foi possível prever este lote.');
+      if (!Array.isArray(body.estimativas) || body.estimativas.length !== indexes.length) {
+        throw new Error('A API retornou quantidade inesperada de previsões.');
+      }
+      indexes.forEach((rowIndex, predictionIndex) => {
+        const estimate = body.estimativas[predictionIndex] || {};
+        const prediction = Number(estimate.estimativa_alvo_brl);
+        if (!Number.isFinite(prediction) || prediction < 0) {
+          statuses[rowIndex] = {status: 'erro de previsão', error: 'Estimativa inválida retornada pela API.', prediction: null};
+          result.invalidRows += 1;
+          return;
+        }
+        const payload = statuses[rowIndex].payload;
+        const direct = estimate.status === 'calculado';
+        statuses[rowIndex] = {
+          ...statuses[rowIndex],
+          status: direct ? 'calculado \u00b7 oferta \u00d7 0,9' : 'estimado \u00b7 experimental',
+          error: '', prediction, payload,
+          methodology: estimate.metodologia || `${body.algoritmo || 'AVM'}, ${body.modelo || 'modelo selecionado'}; alvo de 90% do preço de oferta`,
+        };
+        result.validRows += 1;
+      });
+    } catch (requestError) {
+      const message = requestError instanceof TypeError
+        ? 'Falha de conexão com a API.'
+        : requestError instanceof Error ? requestError.message : 'Falha na previsão.';
+      indexes.forEach(index => {
+        statuses[index] = {status: 'erro de previsão', error: message, prediction: null};
+        result.invalidRows += 1;
+      });
+    }
+
+    await salvarLinhasImportacaoAvm(imported.id, Array.from(
+      {length: end - start},
+      (_, offset) => {
+        const rowIndex = start + offset;
+        const status = statuses[rowIndex];
+        return {
+          source_row: sourceRows[rowIndex].__sourceExcelRow || rowIndex + 2,
+          source_data: sourceRows[rowIndex],
+          prediction: status.prediction,
+          status: status.status,
+          error: status.error || null,
+        };
+      },
+    ));
+  }
+    await finalizarImportacaoAvm(imported.id, 'completed');
+  } catch (processingError) {
+    const message = processingError instanceof Error
+      ? processingError.message
+      : 'Falha inesperada durante a importação.';
+    try {
+      await finalizarImportacaoAvm(imported.id, 'failed', message);
+    } catch (finalizeError) {
+      const detail = finalizeError instanceof Error ? finalizeError.message : 'erro desconhecido';
+      throw new Error(`${message} Não foi possível atualizar o estado no banco configurado: ${detail}`);
+    }
+    throw processingError;
+  }
+
+  try {
+    Object.assign(result, construirArquivoResultado(file.name, sourceRows, statuses, workbook, tableInfo));
+    result.downloaded = true;
+  } catch {
+    result.error = 'Previsões concluídas, mas não foi possível gerar a planilha de saída.';
+    return result;
+  }
+  if (result.invalidRows && !result.validRows) {
+    result.error = 'Nenhuma linha foi estimada; o arquivo de saída preserva os erros por linha.';
+  }
+  return result;
+}
+
+async function processarArquivosAvm() {
+  const input = G('avm-xlsx-files');
+  const button = G('avm-xlsx-button');
+  const loading = G('avm-xlsx-loading');
+  const error = G('avm-xlsx-error');
+  error.textContent = '';
+  G('avm-xlsx-results').style.display = 'none';
+  if (!input.files || !input.files.length) {
+    error.textContent = 'Selecione ao menos um arquivo .xlsx.';
+    return;
+  }
+  if (input.files.length > 10) {
+    error.textContent = 'Selecione no máximo 10 arquivos por vez.';
+    return;
+  }
+
+  avmUploadObjectUrls.forEach(url => URL.revokeObjectURL(url));
+  avmUploadObjectUrls = [];
+  button.disabled = true;
+  loading.classList.add('show');
+  try {
+    let apiStatus;
+    try {
+      const response = await fetch(`${API}/modelo/info`);
+      apiStatus = await response.json();
+      if (!response.ok) {
+        throw new Error(typeof apiStatus.detail === 'string' ? apiStatus.detail : `HTTP ${response.status}`);
+      }
+    } catch (requestError) {
+      if (requestError instanceof TypeError) {
+        throw new Error(`Não foi possível conectar à API em ${API}. Inicie ou reinicie o serviço e tente novamente.`);
+      }
+      throw requestError;
+    }
+    if (apiStatus.avm_oferta_experimental?.disponivel !== true) {
+      throw new Error(
+        `A API em ${API} respondeu, mas não carregou o modelo AVM. ` +
+        'Pare a API antiga no terminal dela (Ctrl+C) e inicie, nesta pasta do projeto, ' +
+        '`py -3.13 -m uvicorn main:app --reload --port 8001`. ' +
+        'Confira o estado do modelo na API configurada.'
+      );
+    }
+
+    const fileResults = [];
+    for (const file of input.files) {
+      try {
+        fileResults.push(await processarArquivoAvm(file));
+      } catch (fileError) {
+        fileResults.push({
+          fileName: file.name,
+          validRows: 0,
+          invalidRows: 0,
+          downloaded: false,
+          error: fileError instanceof Error ? fileError.message : 'Falha inesperada neste arquivo.',
+          downloadUrl: null,
+        });
+      }
+    }
+    avmUploadObjectUrls = fileResults
+      .map(item => item.downloadUrl)
+      .filter(url => typeof url === 'string');
+    renderResultadoUploadsAvm(fileResults);
+    await carregarHistoricoAvm();
+  } catch (requestError) {
+    error.textContent = requestError instanceof Error
+      ? requestError.message
+      : 'Não foi possível confirmar a disponibilidade do modelo AVM.';
+  } finally {
+    loading.classList.remove('show');
+    button.disabled = false;
+  }
+}
+
+async function preverAvm() {
+  const error = G('avm-error');
+  const loading = G('avm-loading');
+  const button = G('avm-button');
+  error.textContent = '';
+  G('avm-result').textContent = '—';
+  G('avm-result-meta').textContent = 'Aguardando uma estimativa.';
+
+  const required = ['avm-area', 'avm-idade'];
+  if (required.some(id => !Number.isFinite(G(id).valueAsNumber))) {
+    error.textContent = 'Preencha a área privativa e a idade do apartamento.';
+    return;
+  }
+  const payload = {
+    area_privativa_m2: numeroOpcional('avm-area'),
+    idade_anos: numeroOpcional('avm-idade'),
+    quartos: numeroOpcional('avm-quartos'),
+    banheiros: numeroOpcional('avm-banheiros'),
+    vagas: numeroOpcional('avm-vagas'),
+    elevador: numeroOpcional('avm-elevador'),
+    area_total_m2: numeroOpcional('avm-area-total'),
+    renda_mediana_mensal_brl: numeroOpcional('avm-renda-mediana'),
+    renda_media_mensal_brl: numeroOpcional('avm-renda-media'),
+    cep: G('avm-cep').value.trim() || null,
+    regiao: G('avm-regiao').value || null,
+    distrito: G('avm-distrito').value.trim() || null,
+    setor_censitario: G('avm-setor').value.trim() || null,
+    padrao_iptu: G('avm-padrao').value.trim() || null,
+  };
+  loading.classList.add('show');
+  button.disabled = true;
+  try {
+    const response = await fetch(`${API}/predict${avmModelQuery()}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error(`A API respondeu em formato inválido (HTTP ${response.status}).`);
+    }
+    if (!response.ok) {
+      throw new Error(typeof result.detail === 'string' ? result.detail : 'Não foi possível estimar o valor.');
+    }
+    G('avm-result').textContent = fmt(result.estimativa_alvo_brl);
+    G('avm-result-meta').textContent =
+      `${result.modelo} · ${result.tipo_estimativa}. ${result.aviso}`;
+  } catch (requestError) {
+    error.textContent = requestError instanceof Error ? requestError.message : 'Falha ao consultar o modelo AVM.';
+  } finally {
+    loading.classList.remove('show');
+    button.disabled = false;
+  }
 }
 
 // ─── PREDITOR ───────────────────────────────────────────────────────────────
-function calcular() {
-  const d = {
-    regiao:    G('f-regiao').value,
-    rua:       G('f-rua').value,
-    area:      +G('f-area').value,
-    quartos:   +G('f-quartos').value,
-    banheiros: +G('f-banheiros').value,
-    vagas:     +G('f-vagas').value,
-    idade:     +G('f-idade').value,
-    suite:     +G('f-suite').value,
-    sacada:    +G('f-sacada').value,
-    piscina:   +G('f-piscina').value,
-  };
+async function calcular() {
+  const area = G('f-area').valueAsNumber;
+  const cep = G('f-cep').value.trim();
+  const pattern = G('f-padrao-iptu').value;
+  const confirmArea = G('f-confirma-area').checked;
+  const error = G('estimate-error');
+  const loading = G('estimate-loading');
+  const button = G('estimate-button');
 
-  const preco = predLocal(d);
-  const pmin  = Math.round(preco * 0.90);
-  const pmax  = Math.round(preco * 1.10);
-  const pm2   = Math.round(preco / d.area);
+  error.textContent = '';
+  G('r-preco').textContent = '—';
+  G('r-m2').textContent = 'Aguardando dados válidos.';
+  G('r-min').textContent = '—';
+  G('r-max').textContent = '—';
+  G('comparaveis').textContent = 'Nenhuma referência calculada.';
+  G('reference-limitations').textContent =
+    'O preço calculado é uma referência comparativa baseada em transações ITBI; não é preço de oferta nem avaliação CAIXA. A faixa observada não é intervalo de confiança individual.';
+  if (!Number.isFinite(area) || area < 15 || area > 1000) {
+    error.textContent = 'Informe uma Área Construída IPTU entre 15 e 1.000 m².';
+    return;
+  }
+  if (cep && !/^(?:\d{5}|\d{8})$/.test(cep.replace(/\D/g, ''))) {
+    error.textContent = 'Informe os cinco primeiros dígitos do CEP ou o CEP completo.';
+    return;
+  }
+  if (!confirmArea) {
+    error.textContent = 'Confirme que a área informada é do cadastro IPTU.';
+    return;
+  }
 
-  G('r-preco').textContent = fmt(preco);
-  G('r-m2').textContent    = 'R$ ' + pm2.toLocaleString('pt-BR') + '/m²';
-  G('r-min').textContent   = fmt(pmin);
-  G('r-max').textContent   = fmt(pmax);
+  loading.classList.add('show');
+  button.disabled = true;
+  try {
+    const response = await fetch(`${API}/referencia/estimativa`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        area_construida_iptu_m2: area,
+        cep: cep || null,
+        codigo_padrao_iptu: pattern || null,
+        confirmar_area_iptu: confirmArea,
+      }),
+    });
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error(`A API respondeu em formato inválido (HTTP ${response.status}).`);
+    }
+    if (!response.ok) {
+      const detail = result && typeof result.detail === 'string'
+        ? result.detail
+        : 'Não foi possível calcular a referência.';
+      throw new Error(detail);
+    }
 
-  // Feature bars
-  const fatores = [
-    {label:'Área ('+d.area+'m²)',     val: COEF.area*d.area,     color:'#5b8fff'},
-    {label:'Região',                   val: COEF[d.regiao]||0,   color:CORES[d.regiao]},
-    {label:'Quartos ('+d.quartos+')', val: COEF.quartos*d.quartos,color:'#3ecf8e'},
-    {label:'Vagas ('+d.vagas+')',     val: COEF.vagas*d.vagas,   color:'#a78bfa'},
-    {label:'Banheiros ('+d.banheiros+')',val:COEF.banheiros*d.banheiros,color:'#5bc8f5'},
-    {label:'Luxo/Amenidades',         val: COEF.luxo_score*(d.suite+d.sacada+d.piscina*2)+COEF.suite*d.suite+COEF.sacada*d.sacada+COEF.piscina*d.piscina, color:'#f5a623'},
-    {label:'Idade (-'+d.idade+'a)',   val: COEF.idade*d.idade,   color:'#e05c5c'},
-  ];
-  const maxVal = Math.max(...fatores.map(f=>Math.abs(f.val)));
-  G('feat-bars').innerHTML = fatores.map(f => {
-    const w = maxVal > 0 ? Math.abs(f.val)/maxVal*100 : 0;
-    const pos = f.val >= 0;
-    return `<div class="feat-row">
-      <span class="feat-name">${f.label}</span>
-      <div class="feat-bar-wrap"><div class="feat-bar" style="width:${w.toFixed(1)}%;background:${pos?f.color:'#e05c5c'};"></div></div>
-      <span class="feat-val" style="color:${pos?f.color:'#e05c5c'}">${pos?'+':''}${fmt(f.val)}</span>
-    </div>`;
-  }).join('');
-
-  // Comparáveis
-  const comps = DATASET.filter(r=>r.regiao===d.regiao)
-    .sort((a,b)=>Math.abs(a.preco-preco)-Math.abs(b.preco-preco)).slice(0,3);
-  G('comparaveis').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">${comps.map(r=>`
-    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px;">
-      <div style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;margin-bottom:4px;">${fmt(r.preco)}</div>
-      <div style="font-size:11px;color:var(--muted);">${r.area}m² · ${r.quartos}q · ${r.banheiros}bh · ${r.vagas}vg · ${r.idade}a</div>
-    </div>`).join('')}</div>`;
+    G('r-preco').textContent = fmt(result.estimated_value_brl);
+    G('r-m2').textContent =
+      `R$ ${Number(result.median_comparable_rate_brl_per_m2).toLocaleString('pt-BR')}/m² · mediana comparativa`;
+    G('r-min').textContent = fmt(result.observed_comparable_range_brl.p10);
+    G('r-max').textContent = fmt(result.observed_comparable_range_brl.p90);
+    const scopeNames = {
+      cep_prefix5_and_iptu_pattern: 'CEP + Código Padrão IPTU',
+      iptu_pattern_citywide: 'Código Padrão IPTU — município',
+      cep_prefix5: 'CEP — município, sem estratificação por padrão',
+      citywide: 'Município — perfil geral',
+    };
+    const support = result.comparable_support;
+    G('comparaveis').textContent =
+      `${Number(support.transactions).toLocaleString('pt-BR')} transações elegíveis · ` +
+      `${scopeNames[support.scope] || support.scope} · período ${result.reference_period.start} a ${result.reference_period.end}.`;
+    const backtest = result.temporal_backtest;
+    G('reference-limitations').textContent =
+      `Alvo: valor declarado de transação ITBI. ` +
+      `Backtest temporal: erro percentual absoluto mediano ${(backtest.median_absolute_percentage_error * 100).toLocaleString('pt-BR', {maximumFractionDigits: 2})}% ` +
+      `e P90 ${(backtest.p90_absolute_percentage_error * 100).toLocaleString('pt-BR', {maximumFractionDigits: 2})}%. ` +
+      `A faixa P10–P90 é observada nos comparáveis, não é intervalo de confiança individual; valide a área e a localização.`;
+  } catch (requestError) {
+    G('r-preco').textContent = '—';
+    G('r-m2').textContent = 'Referência indisponível';
+    G('r-min').textContent = '—';
+    G('r-max').textContent = '—';
+    G('comparaveis').textContent = 'Nenhuma referência calculada.';
+    error.textContent = requestError instanceof TypeError
+      ? 'Não foi possível conectar à API configurada. Verifique a URL e tente novamente.'
+      : requestError instanceof Error ? requestError.message : 'Falha inesperada ao consultar a referência.';
+  } finally {
+    loading.classList.remove('show');
+    button.disabled = false;
+  }
 }
 
 // ─── NAVEGAÇÃO ───────────────────────────────────────────────────────────────
 function goView(id, btn) {
+  if (!['dashboard','mlops','predictor','iup','dados','entrega','api'].includes(id)) return;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   G('view-'+id).classList.add('active');
   if (btn) btn.classList.add('active');
-  if (id === 'regioes') buildRegioes();
-  if (id === 'modelo') buildModelo();
+  if (id === 'mlops') loadAvmOps();
+  if (id === 'predictor') {
+    loadAvmRegionMap();
+    carregarHistoricoAvm();
+  }
+}
+
+function formatAvmMetric(value, digits = 2) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed)
+    ? parsed.toLocaleString('pt-BR', {minimumFractionDigits: digits, maximumFractionDigits: digits})
+    : '—';
+}
+
+function renderAvmFeatures(importances) {
+  const container = G('ops-feature-list');
+  container.replaceChildren();
+  if (!importances || typeof importances !== 'object') {
+    container.textContent = 'Importância das variáveis indisponível.';
+    return;
+  }
+  const features = Object.entries(importances)
+    .filter(([, value]) => Number.isFinite(Number(value)) && Number(value) > 0)
+    .sort((left, right) => Number(right[1]) - Number(left[1]))
+    .slice(0, 6);
+  if (!features.length) {
+    container.textContent = 'O relatório não contém importâncias válidas.';
+    return;
+  }
+  const maxImportance = Number(features[0][1]);
+  features.forEach(([name, value]) => {
+    const row = document.createElement('div');
+    row.className = 'feat-row';
+    const label = document.createElement('span');
+    label.className = 'feat-name';
+    label.style.width = '170px';
+    label.textContent = name;
+    const wrap = document.createElement('div');
+    wrap.className = 'feat-bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'feat-bar';
+    bar.style.width = `${Math.max(0, Math.min(100, Number(value) / maxImportance * 100))}%`;
+    bar.style.background = 'var(--accent)';
+    wrap.appendChild(bar);
+    const amount = document.createElement('span');
+    amount.className = 'feat-val';
+    amount.style.color = 'var(--accent)';
+    amount.textContent = `${(Number(value) * 100).toLocaleString('pt-BR', {maximumFractionDigits: 1})}%`;
+    row.append(label, wrap, amount);
+    container.appendChild(row);
+  });
+}
+
+function renderAvmRegions(regions) {
+  const body = G('ops-regions');
+  body.replaceChildren();
+  if (!regions || typeof regions !== 'object' || !Object.keys(regions).length) {
+    const row = body.insertRow();
+    const cell = row.insertCell();
+    cell.colSpan = 5;
+    cell.textContent = 'Métricas regionais indisponíveis.';
+    return;
+  }
+  Object.entries(regions).forEach(([name, metrics]) => {
+    const row = body.insertRow();
+    [name, Number(metrics.n).toLocaleString('pt-BR'), formatAvmMetric(metrics.r2, 3),
+      Number.isFinite(Number(metrics.mae_brl)) ? fmt(metrics.mae_brl) : '—',
+      Number.isFinite(Number(metrics.mape_percent)) ? `${formatAvmMetric(metrics.mape_percent, 2)}%` : '—']
+      .forEach(value => { row.insertCell().textContent = value; });
+  });
+}
+
+async function loadAvmOps() {
+  const modelName = G('ops-model-name');
+  const status = G('ops-model-status');
+  ['ops-r2','ops-mae','ops-rmse','ops-mape'].forEach(id => { G(id).textContent = '—'; });
+  status.textContent = 'Consultando API';
+  status.className = 'ops-badge ops-badge-pending';
+  try {
+    const response = await fetch(`${API}/modelo/info`);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || `HTTP ${response.status}`);
+    const avm = result.avm_oferta_experimental || {};
+    if (!avm.disponivel) {
+      modelName.textContent = 'Artefato não carregado';
+      status.textContent = 'Indisponível';
+      G('avm-model-select').replaceChildren(new Option('Nenhum modelo carregado', ''));
+      G('avm-model-select').disabled = true;
+      G('ops-model-meta').textContent = avm.motivo_nao_homologado || 'A API não disponibilizou o modelo AVM.';
+      G('ops-rf-status').textContent = 'Indisponível';
+      G('ops-rf-mae').textContent = '—';
+      G('ops-rf-note').textContent = '—';
+      G('ops-catboost-status').textContent = '—';
+      G('ops-catboost-mae').textContent = '—';
+      G('ops-catboost-note').textContent = '—';
+      G('ops-xgboost-status').textContent = '—';
+      G('ops-xgboost-mae').textContent = '—';
+      G('ops-xgboost-note').textContent = '—';
+      G('ops-split-meta').textContent = 'Sem informações de partição.';
+      renderAvmFeatures(null);
+      renderAvmRegions(null);
+      return;
+    }
+
+    const modelLabels = {random_forest: 'Random Forest', catboost: 'CatBoost', xgboost: 'XGBoost'};
+    const selectedModel = String(avm.modelo || '');
+    const selectedKind = selectedModel.startsWith('catboost') ? 'catboost' :
+      selectedModel.startsWith('xgboost') ? 'xgboost' : 'random_forest';
+    const selectedLabel = modelLabels[selectedKind] || selectedModel || 'Modelo AVM';
+    const modelSelect = G('avm-model-select');
+    const previousModel = modelSelect.value;
+    const availableModels = Array.isArray(avm.modelos_disponiveis)
+      ? avm.modelos_disponiveis
+      : [{id: selectedKind, nome: selectedLabel, selecionado: true}];
+    modelSelect.replaceChildren(...availableModels.map(item =>
+      new Option(item.nome || item.id, item.id)
+    ));
+    modelSelect.disabled = availableModels.length === 0;
+    modelSelect.value = availableModels.some(item => item.id === previousModel)
+      ? previousModel
+      : selectedKind;
+    G('avm-model-help').textContent = availableModels.length
+      ? `${availableModels.length} modelo(s) treinado(s) e carregado(s); a escolha também vale para planilhas.`
+      : 'Nenhum modelo treinado foi carregado pela API.';
+    modelName.textContent = selectedLabel;
+    status.textContent = avm.homologado ? 'Homologado' : 'Experimental · não homologado';
+    status.className = `ops-badge ${avm.homologado ? 'ops-badge-ready' : 'ops-badge-pending'}`;
+    const test = avm.metricas_teste_geografico || {};
+    const validation = avm.metricas_validacao || {};
+    const counts = avm.contagens_particoes || {};
+    const districts = avm.contagens_distritos || {};
+    G('ops-r2').textContent = formatAvmMetric(test.r2, 3);
+    G('ops-mae').textContent = Number.isFinite(Number(test.mae_brl)) ? fmt(test.mae_brl) : '—';
+    G('ops-rmse').textContent = Number.isFinite(Number(test.rmse_brl)) ? fmt(test.rmse_brl) : '—';
+    G('ops-mape').textContent = Number.isFinite(Number(test.mape_percent))
+      ? `${formatAvmMetric(test.mape_percent, 2)}%` : '—';
+
+    const trainedAt = avm.treinado_em_utc ? new Date(avm.treinado_em_utc) : null;
+    const trainedText = trainedAt && !Number.isNaN(trainedAt.valueOf())
+      ? trainedAt.toLocaleString('pt-BR', {timeZone: 'UTC'}) + ' UTC'
+      : 'data não registrada';
+    G('ops-model-meta').textContent =
+      `Treinado em ${trainedText} · ${Number(counts.train || 0).toLocaleString('pt-BR')} imóveis no treino · ` +
+      `${Number(test.n || 0).toLocaleString('pt-BR')} no teste geográfico independente.`;
+    const modelStatuses = avm.status_modelos || {
+      random_forest: selectedKind === 'random_forest' ? 'trained' : 'not_trained',
+      catboost: avm.status_catboost,
+      xgboost: avm.status_xgboost,
+    };
+    const validationByModel = avm.comparacao_modelos_validacao || {};
+    const modelDetails = new Map(
+      (Array.isArray(avm.modelos_disponiveis) ? avm.modelos_disponiveis : [])
+        .map(item => [item.id, item])
+    );
+    const renderCandidate = (kind, prefix, legacyMetrics) => {
+      const state = modelStatuses[kind] ||
+        (selectedKind === kind ? 'trained' : 'not_trained');
+      const result = validationByModel[kind] || {};
+      const metrics = result.validation_metrics ||
+        (selectedKind === kind ? legacyMetrics : {});
+      const testMetrics = result.independent_geographic_test_metrics ||
+        modelDetails.get(kind)?.metricas_teste_geografico || {};
+      G(`${prefix}-status`).textContent =
+        state === 'trained' ? (selectedKind === kind ? 'Selecionado · experimental' : 'Treinado · candidato') :
+        state === 'skipped_python_3_15_no_wheel' ? 'Não disponível neste Python' :
+        state === 'not_trained' ? 'Não executado' : state;
+      G(`${prefix}-mae`).textContent =
+        Number.isFinite(Number(metrics.mae_brl)) ? fmt(metrics.mae_brl) : '—';
+      G(`${prefix}-note`).textContent = state === 'trained'
+        ? `${result.candidate ? `${result.candidate} · ` : ''}R² validação ${formatAvmMetric(metrics.r2, 3)}${Number.isFinite(Number(testMetrics.mae_brl)) ? ` · MAE teste independente ${fmt(testMetrics.mae_brl)}` : ''}${selectedKind === kind ? ' · melhor MAE de validação selecionado' : ''}.`
+        : state === 'skipped_python_3_15_no_wheel'
+          ? 'Requer Python compatível e dependências de requirements-avm.txt.'
+          : 'Sem métricas de validação registradas.';
+    };
+    renderCandidate('random_forest', 'ops-rf', validation);
+    renderCandidate('catboost', 'ops-catboost', {});
+    renderCandidate('xgboost', 'ops-xgboost', {});
+    G('ops-split-meta').textContent =
+      `Partição por distrito: treino ${Number(counts.train || 0).toLocaleString('pt-BR')} imóveis / ${Number(districts.train || 0)} distritos; ` +
+      `validação ${Number(counts.validation || 0).toLocaleString('pt-BR')} / ${Number(districts.validation || 0)} distritos; ` +
+      `teste independente ${Number(counts.independent_geographic_test || 0).toLocaleString('pt-BR')} / ` +
+      `${Number(districts.independent_geographic_test || 0)} distritos.`;
+    renderAvmFeatures(avm.importancia_variaveis);
+    renderAvmRegions(avm.metricas_por_regiao);
+  } catch (requestError) {
+    modelName.textContent = 'Status indisponível';
+    status.textContent = 'API desconectada';
+    G('avm-model-select').replaceChildren(new Option('API indisponível', ''));
+    G('avm-model-select').disabled = true;
+    G('avm-model-help').textContent = 'Inicie a API para carregar e selecionar os modelos treinados.';
+    G('ops-model-meta').textContent =
+      requestError instanceof TypeError
+        ? 'Não foi possível conectar à API local. Inicie o FastAPI e atualize o status.'
+        : requestError instanceof Error ? requestError.message : 'Falha ao consultar o modelo.';
+    G('ops-rf-status').textContent = 'Indisponível';
+    G('ops-rf-mae').textContent = '—';
+    G('ops-rf-note').textContent = '—';
+    G('ops-catboost-status').textContent = '—';
+    G('ops-catboost-mae').textContent = '—';
+    G('ops-catboost-note').textContent = '—';
+    G('ops-xgboost-status').textContent = '—';
+    G('ops-xgboost-mae').textContent = '—';
+    G('ops-xgboost-note').textContent = '—';
+    G('ops-split-meta').textContent = 'Sem informações de partição.';
+    renderAvmFeatures(null);
+    renderAvmRegions(null);
+  }
+}
+
+async function loadReadiness() {
+  const state = G('system-state');
+  try {
+    const response = await fetch(`${API}/modelo/info`);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || `HTTP ${response.status}`);
+    const base = result.base_referencia;
+    if (base && base.contagens && base.backtest_temporal) {
+      G('dash-count').textContent = Number(base.contagens.unique_eligible_transactions).toLocaleString('pt-BR');
+      G('dash-period').textContent =
+        `ITBI · ${base.periodo.start} a ${base.periodo.end}`;
+      G('dash-mdape').textContent =
+        `${(base.backtest_temporal.median_absolute_percentage_error * 100).toLocaleString('pt-BR', {maximumFractionDigits: 2})}%`;
+      G('dash-r2').textContent =
+        Number(base.backtest_temporal.r2).toLocaleString('pt-BR', {maximumFractionDigits: 3});
+    }
+    const catalogResponse = await fetch(`${API}/dados/catalogo`);
+    if (!catalogResponse.ok) throw new Error(`Falha ao carregar catálogo das bases (HTTP ${catalogResponse.status}).`);
+    const catalog = await catalogResponse.json();
+    const summary = catalog.summary;
+    G('catalog-summary').textContent =
+      `${Number(summary.itbi_eligible_transactions || 0).toLocaleString('pt-BR')} transações ITBI · ` +
+      `${Number(summary.offer_rows || 0).toLocaleString('pt-BR')} ofertas · ` +
+      `${Number(summary.enriched_join_unique || 0).toLocaleString('pt-BR')} vínculos únicos e ` +
+      `${Number(summary.enriched_join_ambiguous || 0).toLocaleString('pt-BR')} ambíguos. ` +
+      `Fluxo de cálculo e estrutura de métricas disponíveis. Os alvos permanecem separados; os dados complementares da CAIXA serão incorporados para avaliar a operacionalidade do alvo de avaliação.`;
+    const referenceAvailable = Boolean(result.referencia_experimental_disponivel);
+    state.textContent = '';
+    state.style.background = 'transparent';
+    state.style.color = 'inherit';
+    state.style.borderColor = 'transparent';
+  } catch (error) {
+    state.textContent = 'API indisponível';
+    state.title = error instanceof Error ? error.message : 'Falha ao consultar status.';
+    state.style.background = 'rgba(224,92,92,.14)';
+    state.style.color = 'var(--danger)';
+    state.style.borderColor = 'rgba(224,92,92,.3)';
+  }
 }
 
 // ─── REGIÕES ─────────────────────────────────────────────────────────────────
@@ -908,7 +2447,7 @@ function buildModelo() {
 }
 
 // ─── IUP / ROSS-HEIDECKE (IBAPE/SP 2019) ─────────────────────────────────────
-// [classe, padrão, elevador, Ir, R, mín, médio, máx]  (máx null = não definido no estudo)
+// [classe, padrão, elevador, Ir, R, mín, médio, máx] (máx null = não definido)
 const IUP = [
  ['Apartamento','1.1.1 Econômico','',60,.2,2.473,2.748,3.023],
  ['Apartamento','1.1.2 Simples','Sem elevador',60,.2,3.180,3.533,3.827],
@@ -936,14 +2475,14 @@ const f3 = v => v==null ? '—' : v.toFixed(3).replace('.',',');
 
 function rossHeidecke(Ie, Ir, Ec) {
   const x = Math.min(Ie/Ir, 1);
-  return (1 - Ec) * (1 - (x + x*x) / 2);          // Equação 2
+  return (1 - Ec) * (1 - (x + x*x) / 2);
 }
-function foc(K, R) { return R + K * (1 - R); }    // Equação 1
+function foc(K, R) { return R + K * (1 - R); }
 
 function calcIUP() {
   const r = IUP[+G('iup-padrao').value], ec = EC[+G('iup-ec').value];
   const real = +G('iup-real').value, ie = Math.min(+G('iup-ie').value, real);
-  if (+G('iup-ie').value > real) G('iup-ie').value = real;   // item 3.2.6
+  if (+G('iup-ie').value > real) G('iup-ie').value = real;
   const K = rossHeidecke(ie, r[3], ec[2]), F = foc(K, r[4]);
   G('iup-foc').textContent = F.toFixed(4).replace('.',',');
   G('iup-k').textContent = `K = ${K.toFixed(4).replace('.',',')}  ·  Ie/Ir = ${(Math.min(ie/r[3],1)*100).toFixed(1)}%`;
@@ -973,9 +2512,9 @@ function initIUP() {
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  G('hdr-r2').textContent = META.metricas.linear.cv_r2.toFixed(4);
   initIUP();
-  calcular();
+  G('comparaveis').textContent = 'Nenhum cálculo solicitado.';
+  loadReadiness();
 });
 </script>
 </body>
