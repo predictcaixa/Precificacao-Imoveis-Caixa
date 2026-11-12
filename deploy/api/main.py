@@ -2,7 +2,8 @@
 main.py — API REST de Precificação de Imóveis
 ==============================================
 Endpoints:
-  GET  /                         → health check
+  GET  /                         → interface web
+  GET  /health                   → health check
   POST /predict                  → previsão experimental do alvo 90% da oferta
   POST /predict/batch            → previsão experimental em lote
   POST /predict/workbook         → lote manual com saída XLSX no layout TESTE
@@ -28,7 +29,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field, validator
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -71,6 +72,7 @@ logger = logging.getLogger(__name__)
 
 # ─── PATHS ──────────────────────────────────────────────────────────────────────
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_PATH = Path(BASE_DIR) / "index.html"
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 LEGACY_METADATA_PATH = os.path.join(
     BASE_DIR, "arquivo_legado", "models", "metadata.json"
@@ -377,7 +379,12 @@ class CaixaExploratoryEstimateInput(BaseModel):
 
 # ─── ENDPOINTS ──────────────────────────────────────────────────────────────────
 
-@app.get("/", tags=["Status"])
+@app.get("/", include_in_schema=False)
+def serve_frontend():
+    return FileResponse(FRONTEND_PATH, media_type="text/html")
+
+
+@app.get("/health", tags=["Status"])
 def health():
     selected_entry = (
         avm_bundle.report.get("available_models", {}).get(avm_bundle.model_type, {})

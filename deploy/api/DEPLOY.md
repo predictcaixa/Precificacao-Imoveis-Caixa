@@ -1,6 +1,6 @@
-# Deploy da API com Supabase
+# Deploy da interface e API com Supabase
 
-O deploy inclui somente a API FastAPI. O frontend estatico fica fora deste pacote; o colega podera testar as rotas pelo Swagger em `/docs` ou por um cliente HTTP.
+O pacote inclui a interface estática e a API FastAPI no mesmo serviço. A tela é servida em `/`, o estado do serviço em `/health`, e o Swagger em `/docs`.
 
 ## Pacote versionado no GitHub
 
@@ -10,7 +10,7 @@ Gere o pacote sanitizado em `deploy/api`:
 py -3.13 -B scripts\package_deploy.py
 ```
 
-Configure o servico Python ligado ao repositorio GitHub com `deploy/api` como diretorio raiz. O pacote contem `main.py`, `requirements.txt`, `Procfile`, os modulos da API, os modelos de inferencia e somente relatorios agregados. Nao copia `.env`, SQLite, uploads nem planilhas-fonte.
+Configure o serviço Python ligado ao repositório GitHub com `deploy/api` como diretório raiz. O pacote contém `index.html`, `main.py`, `requirements.txt`, `Procfile`, os módulos da API, os modelos de inferência e somente relatórios agregados. Não copia `.env`, SQLite, uploads nem planilhas-fonte.
 
 ## Variaveis do servico da API
 
@@ -45,7 +45,7 @@ Verde significa proximidade de ate 7% com ao menos uma previsao de colega; amare
 
 O login permanece desativado nesta fase, conforme solicitado para o teste do colega. O servico aceita chamadas publicas enquanto estiver exposto; use dados de teste e remova a exposicao quando a validacao terminar. O historico de importacao e acessivel pelas rotas da API.
 
-Depois do deploy, confira `GET /`, `GET /modelo/info`, `POST /predict`, `POST /predict/batch`, `POST /predict/workbook` e o upload/historico pelo frontend local ou cliente HTTP. `/predict/workbook` recebe os dados manuais e devolve um XLSX com o layout do arquivo de teste e as quatro colunas de saida. No log de inicializacao confirme `Armazenamento de importacoes conectado: postgresql` e o carregamento dos modelos AVM.
+Depois do deploy, confira `GET /`, `GET /health`, `GET /modelo/info`, `POST /predict`, `POST /predict/batch`, `POST /predict/workbook` e o upload/histórico pela própria interface ou por um cliente HTTP. `/predict/workbook` recebe os dados manuais e devolve um XLSX com o layout do arquivo de teste e as quatro colunas de saída. No log de inicialização confirme `Armazenamento de importações conectado: postgresql` e o carregamento dos modelos AVM.
 
 ## Supabase e GitHub
 

@@ -8,5 +8,6 @@ __pycache__/
 /deploy/*
 !/deploy/api/
 !/deploy/api/**
+/deploy/api/dados/avm_uploads.sqlite3*
 .venv/
 venv/

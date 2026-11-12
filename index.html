@@ -974,14 +974,16 @@
   </main>
 </div>
 
-<script src="./config.js"></script>
 <script>
 // ─── DADOS DE REFERÊNCIA — SÃO PAULO ────────────────────────────────────────
-const API = (window.API_BASE_URL || "http://localhost:8001").replace(/\/+$/, "");
+const defaultApiBase = window.location.protocol === "file:"
+  ? "http://localhost:8001"
+  : window.location.origin;
+const API = (window.API_BASE_URL || defaultApiBase).replace(/\/+$/, "");
 const apiBaseDisplay = document.querySelector('.api-url');
 if (apiBaseDisplay) apiBaseDisplay.textContent = API;
 const apiDocsDisplay = document.querySelector('#view-api .card strong');
-if (apiDocsDisplay) apiDocsDisplay.textContent = ${API}/docs;
+if (apiDocsDisplay) apiDocsDisplay.textContent = `${API}/docs`;
 document.querySelectorAll('#view-api pre').forEach(pre => { pre.textContent = pre.textContent.replaceAll('__API_BASE_URL__', API); });
 function avmModelQuery() {
   const model = G('avm-model-select').value;

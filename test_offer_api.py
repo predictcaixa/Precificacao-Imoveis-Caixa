@@ -47,6 +47,13 @@ class FixedLogModel:
 
 
 class OfferAvmApiTests(unittest.TestCase):
+    def test_root_serves_frontend_and_health_endpoint_remains_available(self):
+        frontend = main.serve_frontend()
+        self.assertEqual(Path(frontend.path), main.FRONTEND_PATH)
+        self.assertEqual(frontend.media_type, "text/html")
+        self.assertIn("/health", {route.path for route in main.app.routes})
+        self.assertFalse(main.health()["estimativa_operacional_aprovada"])
+
     def test_api_features_match_model_schema_and_exclude_prices(self):
         features = build_api_feature_row(main.avm_input_as_dict(sample_input()))
         self.assertEqual(features["AREA PRIV."], 60)

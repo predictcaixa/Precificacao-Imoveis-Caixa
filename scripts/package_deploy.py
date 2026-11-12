@@ -1,4 +1,4 @@
-"""Build the API-only package for a Python host connected to Supabase Postgres."""
+"""Build the FastAPI and web UI package for a Python host connected to Supabase Postgres."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ API_MODULES = (
     "process_comparison_workbook.py",
     "serve_offer_avm.py",
     "train_offer_avm.py",
+    "validate_caixa_calculations.py",
 )
 
 
@@ -38,6 +39,7 @@ def package(output: Path) -> None:
         )
     output.mkdir(parents=True)
     copy_file(ROOT / "main.py", output / "main.py")
+    copy_file(ROOT / "index.html", output / "index.html")
     copy_file(ROOT / "requirements-api.txt", output / "requirements.txt")
     for module in API_MODULES:
         copy_file(ROOT / "scripts" / module, output / "scripts" / module)
