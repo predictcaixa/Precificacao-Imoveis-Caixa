@@ -37,7 +37,7 @@ Este repositório reúne um protótipo de API de precificação e os dados de tr
 
 ## Estrutura
 
-O deploy desta etapa inclui a interface web servida pela API FastAPI, conectada ao Supabase Postgres; o pacote fica em `deploy/api` e as instruções estão em [`docs/deploy.md`](docs/deploy.md). O login permanece desativado para o teste solicitado pelo colega. Configure `DATABASE_URL` como segredo no host da API e não envie o `.env` ao GitHub.
+O deploy na Vercel inclui a interface web servida pela API FastAPI, conectada ao Supabase Postgres; selecione `deploy/api` como Root Directory e siga [`docs/deploy.md`](docs/deploy.md). O pacote Vercel inclui apenas o modelo Random Forest para caber no limite das funções; localmente, continuam disponíveis os três modelos. O login permanece desativado para o teste solicitado. Configure `DATABASE_URL` como variável secreta na Vercel e não envie o `.env` ao GitHub.
 
 ```text
 .

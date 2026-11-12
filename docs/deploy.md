@@ -1,32 +1,36 @@
-# Deploy da interface e API com Supabase
+# Deploy da interface e API na Vercel com Supabase
 
 O pacote inclui a interface estática e a API FastAPI no mesmo serviço. A tela é servida em `/`, o estado do serviço em `/health`, e o Swagger em `/docs`.
 
-## Pacote versionado no GitHub
+Para caber no limite de tamanho das funções Vercel, o pacote gerado inclui somente o modelo Random Forest para inferência e dependências reduzidas. Os pacotes locais continuam podendo usar os três modelos. Na Vercel, configure `deploy/api` como **Root Directory** e use `AVM_DEFAULT_MODEL=random_forest`; esse é também o padrão detectado pelo runtime Vercel.
 
-Gere o pacote sanitizado em `deploy/api`:
+## Gerar o pacote Vercel
+
+Gere ou atualize o pacote sanitizado em `deploy/api` e envie a pasta atualizada ao GitHub:
 
 ```powershell
-py -3.13 -B scripts\package_deploy.py
+py -3.13 -B scripts\package_deploy.py --replace
 ```
 
-Configure o serviço Python ligado ao repositório GitHub com `deploy/api` como diretório raiz. O pacote contém `index.html`, `main.py`, `requirements.txt`, `Procfile`, os módulos da API, os modelos de inferência e somente relatórios agregados. Não copia `.env`, SQLite, uploads nem planilhas-fonte.
+O pacote contém `index.html`, `main.py`, dependências reduzidas, módulos da API, o artefato Random Forest e somente relatórios agregados. Não copia `.env`, SQLite, uploads, planilhas-fonte ou Uvicorn (a Vercel fornece o runtime ASGI).
 
-## Variaveis do servico da API
+## Variáveis de ambiente na Vercel
 
-No painel do host da API, cadastre `DATABASE_URL` com a connection string Postgres copiada do painel Supabase em **Connect**. O codigo aceita `DATABASE_URL` e mantem `AVM_DATABASE_URL` como alias de maior prioridade. O valor fica como variavel secreta do host, nunca no GitHub, no frontend ou em `deploy/api`.
+Cadastre no projeto Vercel:
 
-No mesmo painel, configure `AVM_DEFAULT_MODEL=catboost` e `AVM_OUTPUT_ADJUSTMENT_FACTOR=1.0`. Se ainda existir a variavel antiga com `1.1833`, substitua-a por `1.0`; variaveis definidas no host prevalecem sobre o valor padrao do codigo.
+- `DATABASE_URL`: URL PostgreSQL do Supabase com SSL; use um pooler compatível com serverless.
+- `AVM_DEFAULT_MODEL=random_forest`
+- `AVM_OUTPUT_ADJUSTMENT_FACTOR=1.0`
 
-O modelo experimental padrao da API e `catboost`, configurado por `AVM_DEFAULT_MODEL=catboost`; tambem e possivel escolher `xgboost` ou `random_forest`. O fator `AVM_OUTPUT_ADJUSTMENT_FACTOR` tem padrao `1.0`, sem multiplicacao adicional. No conjunto `TESTE_comp.xlsx`, o fator 1.1833 reduziu o MAPE contra a media de Januario/Analise, mas aumentou o MAPE contra `AVALIACAO` de 16,66% para 20,51%, por isso deixou de ser o padrao. Um CatBoost experimental treinado para imitar a media dos dois colegas foi avaliado por leave-one-out em 28 casos: MAPE de 15,22% contra a media dos colegas e 20,21% contra `AVALIACAO`; nao foi aprovado para substituir o modelo padrao. O alvo de treino operacional continua sendo 90% da oferta, nao uma avaliacao confirmada.
+O código aceita `DATABASE_URL` e mantém `AVM_DATABASE_URL` como alias de maior prioridade. O valor fica como variável secreta, nunca no GitHub, no frontend ou em `deploy/api`. Não use SQLite em produção na Vercel, pois o disco da função não é persistente. Como credenciais foram expostas anteriormente, rotacione-as no Supabase e configure somente credenciais novas.
 
-Use a string com `sslmode=require`. Para um backend persistente, o Supabase recomenda a conexao direta; se o host da API for somente IPv4, use o Session Pooler. Use o Transaction Pooler para funcoes serverless/edge e confirme a compatibilidade com prepared statements. Copie host, porta e usuario exatamente do painel Supabase, pois variam conforme o metodo escolhido.
+O `.python-version` gerado fixa Python 3.13. As variáveis definidas no painel prevalecem sobre os padrões do código.
 
-O inicio da API cria as tabelas `avm_imports` e `avm_import_rows` se ainda nao existirem. A migration em `supabase/migrations/` tambem descreve o schema para a integracao GitHub do Supabase. As tabelas usam RLS sem politicas publicas; a API conecta ao banco pelo backend.
+O início da API cria as tabelas `avm_imports` e `avm_import_rows` se ainda não existirem. A migration em `supabase/migrations/` também descreve o schema para a integração GitHub do Supabase. As tabelas usam RLS sem políticas públicas; a API conecta ao banco pelo backend.
 
-## Validacao comparativa aprovada
+## Comportamento e limitações
 
-O fluxo padrao usa CatBoost sem multiplicador adicional (`AVM_OUTPUT_ADJUSTMENT_FACTOR=1.0`) e identifica a previsao como estimativa experimental do alvo proxy `90% × OFERTA`. Quando a oferta e enviada, a API retorna separadamente o calculo aritmetico de `90% × OFERTA`, que nao e uma previsao CatBoost. A coluna `AVALIACAO` da planilha de comparacao e apenas valor de referencia e nao entra como dado de entrada nem como alvo do modelo atual.
+Na Vercel, somente Random Forest é carregado; CatBoost e XGBoost permanecem disponíveis no ambiente local completo. A previsão é uma estimativa experimental do alvo proxy `90% × OFERTA`, não uma avaliação aprovada. Quando a oferta é enviada, a API retorna separadamente o cálculo aritmético de `90% × OFERTA`. A coluna `AVALIACAO` da planilha de comparação é apenas valor de referência e não entra como dado de entrada nem como alvo do modelo atual.
 
 Depois de gerar a planilha com as previsoes do endpoint, a ferramenta offline abaixo substitui a coluna Guilherme, registra o calculo direto da oferta em coluna separada e colore previsoes a ate 7% de pelo menos um colega. Ela requer a planilha de comparacao e a planilha de resultado da API; esses dados de referencia nao sao enviados nem embutidos no servico de deploy.
 
@@ -34,9 +38,9 @@ Depois de gerar a planilha com as previsoes do endpoint, a ferramenta offline ab
 py -3.13 -B scripts\build_peer_comparison_workbook.py `
   dados\derivados\TESTE_comp.xlsx `
   dados\derivados\TESTE_deploy_resultado_avm.xlsx `
-  --model-label CatBoost `
+  --model-label Random-Forest `
   --tolerance-percent 7 `
-  --output dados\derivados\TESTE_comp_Guilherme_CatBoost_7pct.xlsx
+  --output dados\derivados\TESTE_comp_Guilherme_Random-Forest_7pct.xlsx
 ```
 
 Verde significa proximidade de ate 7% com ao menos uma previsao de colega; amarelo significa que nenhum resultado ficou nessa tolerancia. A cor mede alinhamento com colegas, nao acuracia contra uma avaliacao independente.
@@ -45,18 +49,17 @@ Verde significa proximidade de ate 7% com ao menos uma previsao de colega; amare
 
 O login permanece desativado nesta fase, conforme solicitado para o teste do colega. O servico aceita chamadas publicas enquanto estiver exposto; use dados de teste e remova a exposicao quando a validacao terminar. O historico de importacao e acessivel pelas rotas da API.
 
-Depois do deploy, confira `GET /`, `GET /health`, `GET /modelo/info`, `POST /predict`, `POST /predict/batch`, `POST /predict/workbook` e o upload/histórico pela própria interface ou por um cliente HTTP. `/predict/workbook` recebe os dados manuais e devolve um XLSX com o layout do arquivo de teste e as quatro colunas de saída. No log de inicialização confirme `Armazenamento de importações conectado: postgresql` e o carregamento dos modelos AVM.
+Depois do deploy, confira `GET /`, `GET /health`, `GET /modelo/info`, `POST /predict`, `POST /predict/batch`, `POST /predict/workbook` e o upload/histórico pela própria interface ou por um cliente HTTP. `/predict/workbook` recebe os dados manuais e devolve um XLSX com o layout do arquivo de teste e as quatro colunas de saída. No log de inicialização confirme `Armazenamento de importações conectado: postgresql` e o carregamento do modelo AVM Random Forest.
 
 ## Supabase e GitHub
 
-A integracao GitHub do Supabase aplica migrations presentes em `supabase/`; ela nao hospeda este processo Python. O servico FastAPI continua sendo publicado a partir do mesmo repositorio, mas como servico web separado. Defina `DATABASE_URL` no ambiente desse host, nao apenas como segredo de GitHub Actions.
+A integracao GitHub do Supabase aplica migrations presentes em `supabase/`; ela nao hospeda este processo Python. A Vercel publica a API e a interface a partir da pasta `deploy/api`. Defina `DATABASE_URL` nas variaveis de ambiente do projeto Vercel, nao apenas como segredo de GitHub Actions.
 
 Se o Supabase ja tiver as tabelas porque a API foi iniciada antes, a migration usa `IF NOT EXISTS` e habilita RLS sem adicionar politicas ao acesso anonimo. Confira o historico de migrations do projeto antes de ativa-la na branch de producao.
 
 ## Itens operacionais
 
 - Python 3.13 e dependencias listadas em `requirements.txt`.
-- Start command do `Procfile`: `uvicorn main:app --host 0.0.0.0 --port $PORT`.
 - PostgreSQL Supabase alcancavel pelo host, com SSL.
 - Backup/recovery do banco e politica de retencao dos uploads antes de usar dados reais.
 - `deploy/` pode ser enviado ao GitHub depois de revisar os arquivos gerados; o `.env` e o banco local permanecem ignorados.

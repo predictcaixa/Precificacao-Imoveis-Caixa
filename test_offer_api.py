@@ -144,6 +144,36 @@ class OfferAvmApiTests(unittest.TestCase):
         self.assertEqual(set(bundles), {"random_forest", "catboost", "xgboost"})
         self.assertEqual(bundles, loaded)
 
+    def test_vercel_runtime_loads_only_random_forest(self):
+        bundle = AvmModelBundle(FixedLogModel(), {}, "random_forest")
+        report_path = Path("models/offer_avm/avm_report.json")
+        with (
+            patch.dict(
+                "os.environ",
+                {"VERCEL": "1"},
+                clear=True,
+            ),
+            patch.object(main, "load_avm_model", return_value=bundle) as load_one,
+            patch.object(main, "load_avm_models") as load_all,
+        ):
+            loaded = main._load_runtime_avm_models(report_path)
+
+        self.assertEqual(loaded, {"random_forest": bundle})
+        load_one.assert_called_once_with(report_path, "random_forest")
+        load_all.assert_not_called()
+
+    def test_vercel_runtime_rejects_models_missing_from_its_bundle(self):
+        with (
+            patch.dict(
+                "os.environ",
+                {"VERCEL": "1", "AVM_DEFAULT_MODEL": "catboost"},
+            ),
+            patch.object(main, "load_avm_model") as load_one,
+        ):
+            with self.assertRaisesRegex(ValueError, "somente Random Forest"):
+                main._load_runtime_avm_models(Path("models/offer_avm/avm_report.json"))
+        load_one.assert_not_called()
+
     def test_single_prediction_route_returns_experimental_target(self):
         bundle = SimpleNamespace(
             report={

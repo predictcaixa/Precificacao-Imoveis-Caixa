@@ -45,6 +45,7 @@ from scripts.build_data_catalog import DEFAULT_JSON as DATA_CATALOG_PATH
 from scripts.experimental_reference import estimate_reference
 from scripts.serve_offer_avm import (
     AvmModelBundle,
+    load_avm_model,
     load_avm_models,
     predict_discounted_offer,
     predict_discounted_offers,
@@ -155,8 +156,9 @@ async def carregar_recursos():
         )
 
     if os.path.isfile(AVM_REPORT_PATH):
-        avm_bundles = load_avm_models(Path(AVM_REPORT_PATH))
-        configured_model = os.environ.get("AVM_DEFAULT_MODEL", "catboost").strip()
+        avm_bundles = _load_runtime_avm_models(Path(AVM_REPORT_PATH))
+        default_model = "random_forest" if _is_vercel_runtime() else "catboost"
+        configured_model = os.environ.get("AVM_DEFAULT_MODEL", default_model).strip()
         selected_key = _avm_model_key(configured_model)
         if selected_key is None:
             selected_key = _avm_model_key(
@@ -315,6 +317,31 @@ def _avm_model_key(model_name: object) -> Optional[str]:
     if model_name == "random_forest":
         return "random_forest"
     return None
+
+
+def _is_vercel_runtime() -> bool:
+    return os.environ.get("VERCEL") == "1"
+
+
+def _load_runtime_avm_models(report_path: Path) -> dict[str, AvmModelBundle]:
+    single_model_mode = _is_vercel_runtime() or os.environ.get(
+        "AVM_SINGLE_MODEL_MODE", ""
+    ).strip().casefold() in {"1", "true", "yes"}
+    if not single_model_mode:
+        return load_avm_models(report_path)
+
+    default_model = "random_forest" if _is_vercel_runtime() else "catboost"
+    model_key = _avm_model_key(
+        os.environ.get("AVM_DEFAULT_MODEL", default_model).strip()
+    )
+    if model_key is None:
+        raise ValueError("AVM_DEFAULT_MODEL não identifica um modelo suportado.")
+    if _is_vercel_runtime() and model_key != "random_forest":
+        raise ValueError(
+            "Este pacote Vercel inclui somente Random Forest. "
+            "Defina AVM_DEFAULT_MODEL=random_forest."
+        )
+    return {model_key: load_avm_model(report_path, model_key)}
 
 
 def _resolve_avm_bundle(model_key: Optional[str]) -> AvmModelBundle:

@@ -1,11 +1,5 @@
 fastapi>=0.115,<1
-uvicorn>=0.30,<1
 psycopg[binary]>=3.2,<4
-# -r requirements-avm.txt
-catboost>=1.2.8
 openpyxl>=3.1.5
-pandas>=2.2
-scikit-learn>=1.7
-xgboost>=2.1
-fastapi>=0.115
-uvicorn[standard]>=0.30
+pandas>=3.1,<4
+scikit-learn==1.9.1
