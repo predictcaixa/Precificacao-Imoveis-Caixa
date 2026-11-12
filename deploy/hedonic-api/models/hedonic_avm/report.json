@@ -1,0 +1,234 @@
+{
+  "model_id": "hedonic_spline_ridge_v4_offer_calibrated",
+  "status": "experimental_challenger_not_approved_for_operational_use",
+  "generated_at_utc": "2026-11-12T17:12:44.323531+00:00",
+  "runtime_versions": {
+    "python": "3.13.16",
+    "scikit_learn": "1.9.1",
+    "joblib": "1.6.0"
+  },
+  "input_file": "dados\\30.10.2026.xlsx",
+  "input_sheet": "BASE CONSOLIDADA",
+  "target": "VALOR OFERTA",
+  "target_definition": "100% of asking/list price reconstructed from the audited 0.90*OFERTA source target; not verified sale/appraisal",
+  "method": {
+    "family": "regularized hedonic regression",
+    "feature_selection": "Ridge spline hedonic model with physical attributes, district, and five-digit CEP prefix; excludes System 1 income, census-sector, and IPTU-standard features.",
+    "equation": "log(target) = intercept + additive quadratic spline terms for numeric features + one-hot categorical effects; prediction = exp(linear predictor) * Duan smearing factor",
+    "numeric_features": [
+      "IDADE",
+      "QUARTOS",
+      "BANHEIROS",
+      "VAGAS",
+      "ELEVADOR",
+      "AREA PRIV."
+    ],
+    "categorical_features": [
+      "CEP",
+      "Distrito"
+    ],
+    "spline_knots": 4,
+    "spline_degree": 2,
+    "ridge_alpha_selected_by_validation_mae": 0.1,
+    "smearing_factor_fit_on_development_partition": 1.0223947889471388
+  },
+  "selection": [
+    {
+      "alpha": 0.1,
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.6986296454512944,
+        "rmse_brl": 263424.133224331,
+        "mae_brl": 192843.47040862223,
+        "mape_percent": 33.28620889429694,
+        "bias_brl": 48996.69925283819
+      }
+    },
+    {
+      "alpha": 1.0,
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.698272681967723,
+        "rmse_brl": 263580.09575781686,
+        "mae_brl": 193320.64343867643,
+        "mape_percent": 33.402695513954434,
+        "bias_brl": 51159.253423967915
+      }
+    },
+    {
+      "alpha": 10.0,
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.6941557254805382,
+        "rmse_brl": 265372.22917052323,
+        "mae_brl": 196863.60088978562,
+        "mape_percent": 34.28795621865713,
+        "bias_brl": 66514.14738553799
+      }
+    },
+    {
+      "alpha": 100.0,
+      "validation_metrics": {
+        "n": 2032,
+        "r2": 0.6705154172457428,
+        "rmse_brl": 275437.3581187176,
+        "mae_brl": 209109.15747421194,
+        "mape_percent": 36.763930435374384,
+        "bias_brl": 104828.32811296033
+      }
+    }
+  ],
+  "offer_calibration": {
+    "method": "median observed_offer / raw_prediction on a separate geographically grouped calibration partition",
+    "factor": 0.8484475849363369,
+    "n": 1227,
+    "calibration_metrics_before_factor": {
+      "n": 1227,
+      "r2": 0.5926473269669001,
+      "rmse_brl": 327790.2207700777,
+      "mae_brl": 194476.0157190057,
+      "mape_percent": 33.311482377727074,
+      "bias_brl": -25216.84383781886
+    },
+    "calibration_metrics_after_factor_not_independent": {
+      "n": 1227,
+      "r2": 0.5054351496236453,
+      "rmse_brl": 361178.86678169365,
+      "mae_brl": 196494.9392954902,
+      "mape_percent": 25.784509152336128,
+      "bias_brl": -117938.0356960957
+    }
+  },
+  "independent_geographic_test": {
+    "n": 1888,
+    "r2": 0.37259112216270096,
+    "rmse_brl": 495770.97165172285,
+    "mae_brl": 304509.4144535698,
+    "mape_percent": 27.57771734525694,
+    "bias_brl": -273587.4891322928
+  },
+  "independent_geographic_test_before_offer_calibration": {
+    "n": 1888,
+    "r2": 0.5419140454787903,
+    "rmse_brl": 423622.72793261986,
+    "mae_brl": 249270.41343094804,
+    "mape_percent": 24.561622936316933,
+    "bias_brl": -164550.30627466796
+  },
+  "independent_geographic_test_median_baseline": {
+    "n": 1888,
+    "r2": -0.09608950443975917,
+    "rmse_brl": 655282.80830691,
+    "mae_brl": 426753.1996822034,
+    "mape_percent": 52.28422134005011,
+    "bias_brl": -194018.76747881356
+  },
+  "partition_counts": {
+    "validation": 2032,
+    "independent_geographic_test": 1888,
+    "model_fit": 4441,
+    "offer_calibration": 1227
+  },
+  "partition_district_counts": {
+    "validation": 10,
+    "independent_geographic_test": 8,
+    "model_fit": 21,
+    "offer_calibration": 6
+  },
+  "target_leakage_check": {
+    "target_column_used_as_feature": false,
+    "offer_column_used_as_feature": false,
+    "calibration_district_overlap_with_fit": false,
+    "calibration_uses_peer_predictions": false,
+    "district_group_overlap": false
+  },
+  "data_audit": {
+    "input_rows": 12762,
+    "training_eligible_rows": 9588,
+    "excluded_rows_by_reason": {
+      "age_over_20_years": 3,
+      "offer_missing_or_nonpositive": 742,
+      "private_area_missing_or_out_of_range": 1521,
+      "target_missing_or_nonpositive": 908
+    },
+    "target_rows_without_valid_offer": 742,
+    "feature_values_out_of_range_set_to_missing": {
+      "VAGAS": 1
+    },
+    "feature_missing_coverage": {
+      "LATITUDE": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "LONGITUDE": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "IDADE": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "QUARTOS": {
+        "count": 2,
+        "percent": 0.02
+      },
+      "BANHEIROS": {
+        "count": 1,
+        "percent": 0.01
+      },
+      "VAGAS": {
+        "count": 20,
+        "percent": 0.21
+      },
+      "ELEVADOR": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "RENDA MEDIANA IBGE 2022 (R$)": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "RENDA MÉDIA IBGE 2022 (R$)": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "Área total": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "AREA PRIV.": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "CEP": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "Região": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "Distrito": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "SETOR CENSITÁRIO 2022": {
+        "count": 0,
+        "percent": 0.0
+      },
+      "Padrão (IPTU)": {
+        "count": 0,
+        "percent": 0.0
+      }
+    },
+    "rows_with_offer_discount_mismatch": 0,
+    "unique_validation_districts": 45,
+    "official_region_nonempty_rows": 9588
+  },
+  "limitations": [
+    "The model learns the asking/list price, reconstructed from the source workbook's audited 90%-of-offer target; it does not learn verified sale/appraisal values.",
+    "The geographic split does not establish temporal performance or representativeness.",
+    "This challenger is not an appraisal model and is not approved for operational or credit decisions."
+  ],
+  "artifact": "models\\hedonic_avm\\hedonic_spline_ridge_v4_offer_calibrated.joblib"
+}
