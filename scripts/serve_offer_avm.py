@@ -83,7 +83,8 @@ def _load_model_bundle(
         artifact_value = report.get("model_file")
     if not isinstance(artifact_value, str) or not artifact_value.strip():
         raise ValueError(f"O relatório não informa o artefato do modelo {model_key}.")
-    artifact_path = (BASE_DIR / Path(artifact_value)).resolve()
+    rel_path = Path(*artifact_value.replace("\\", "/").strip("/").split("/"))
+    artifact_path = (BASE_DIR / rel_path).resolve()
     if not artifact_path.is_relative_to(BASE_DIR.resolve()):
         raise ValueError("O caminho do artefato do AVM está fora do projeto.")
 

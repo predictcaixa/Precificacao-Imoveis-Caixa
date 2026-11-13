@@ -423,7 +423,7 @@
         "missingindicator_QUARTOS": 0.0,
         "missingindicator_BANHEIROS": 0.0
       },
-      "model_file": "models\\offer_avm\\offer_avm.joblib"
+      "model_file": "models/offer_avm/offer_avm.joblib"
     },
     "catboost": {
       "status": "trained",
@@ -467,7 +467,7 @@
         "QUARTOS": 0.41166561272338087,
         "ELEVADOR": 0.21821073751552975
       },
-      "model_file": "models\\offer_avm\\offer_avm_catboost.cbm"
+      "model_file": "models/offer_avm/offer_avm_catboost.cbm"
     },
     "xgboost": {
       "status": "trained",
@@ -517,7 +517,7 @@
         "missingindicator_BANHEIROS": 0.00018153483688365668,
         "missingindicator_QUARTOS": 0.00012547944788821042
       },
-      "model_file": "models\\offer_avm\\offer_avm_xgboost.joblib"
+      "model_file": "models/offer_avm/offer_avm_xgboost.joblib"
     }
   },
   "selected_model": "xgboost_depth_6",
@@ -581,9 +581,9 @@
     "mape_percent": 52.28422134005011,
     "bias_brl": -174616.8907309322
   },
-  "model_file": "models\\offer_avm\\offer_avm_xgboost.joblib",
-  "prediction_workbook": "dados\\derivados\\30.10.2026_avm_estimativas.xlsx",
-  "test_residuals_file": "models\\offer_avm\\test_residuals.csv",
+  "model_file": "models/offer_avm/offer_avm_xgboost.joblib",
+  "prediction_workbook": "dados/derivados/30.10.2026_avm_estimativas.xlsx",
+  "test_residuals_file": "models/offer_avm/test_residuals.csv",
   "limitations": [
     "O rótulo é um desconto fixo de 10% sobre oferta, não preço final de venda.",
     "A validação geográfica reserva distritos inteiros; os resultados também são reportados por Região.",

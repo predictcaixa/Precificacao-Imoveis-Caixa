@@ -328,9 +328,9 @@ def _iqr_outlier_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
 
 def _report_path(path: Path) -> str:
     try:
-        return str(path.resolve().relative_to(BASE_DIR))
+        return path.resolve().relative_to(BASE_DIR).as_posix()
     except ValueError:
-        return str(path.resolve())
+        return path.resolve().as_posix()
 
 
 def _frame(records: list[dict[str, Any]], feature_names: list[str]):

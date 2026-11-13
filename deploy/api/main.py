@@ -789,8 +789,8 @@ def info_modelo():
     filter_counts = reference_rates.get("filter_counts") if reference_rates else None
     avm_report = avm_bundle.report if avm_bundle is not None else {}
     selected_model_key = (
-        avm_bundle.model_type if avm_bundle is not None
-        else _avm_model_key(avm_report.get("selected_model"))
+        getattr(avm_bundle, "model_type", None)
+        or _avm_model_key(avm_report.get("selected_model"))
     )
     loaded_models = dict(avm_bundles)
     if not loaded_models and avm_bundle is not None:
@@ -833,17 +833,23 @@ def info_modelo():
             "fator_ajuste_saida": AVM_OUTPUT_ADJUSTMENT_FACTOR,
             "referencia_fator_ajuste": "fator adicional configurado pelo ambiente",
             "modelo": (
-                selected_model_report.get("candidate", avm_bundle.model_type)
+                selected_model_report.get("candidate", getattr(avm_bundle, "model_type", selected_model_key))
                 if avm_bundle is not None else None
             ),
             "modelos_disponiveis": models_available,
             "metricas_teste_geografico": (
-                selected_model_report.get("independent_geographic_test_metrics")
+                (
+                    selected_model_report.get("independent_geographic_test_metrics")
+                    or avm_report.get("independent_geographic_test_metrics")
+                )
                 if avm_bundle is not None
                 else None
             ),
             "metricas_validacao": (
-                selected_model_report.get("validation_metrics")
+                (
+                    selected_model_report.get("validation_metrics")
+                    or avm_report.get("selected_model_validation_metrics")
+                )
                 if avm_bundle is not None
                 else None
             ),

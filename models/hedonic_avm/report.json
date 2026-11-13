@@ -7,7 +7,7 @@
     "scikit_learn": "1.9.1",
     "joblib": "1.6.0"
   },
-  "input_file": "dados\\30.10.2026.xlsx",
+  "input_file": "dados/30.10.2026.xlsx",
   "input_sheet": "BASE CONSOLIDADA",
   "target": "VALOR OFERTA",
   "target_definition": "100% of asking/list price reconstructed from the audited 0.90*OFERTA source target; not verified sale/appraisal",
@@ -230,5 +230,5 @@
     "The geographic split does not establish temporal performance or representativeness.",
     "This challenger is not an appraisal model and is not approved for operational or credit decisions."
   ],
-  "artifact": "models\\hedonic_avm\\hedonic_spline_ridge_v4_offer_calibrated.joblib"
+  "artifact": "models/hedonic_avm/hedonic_spline_ridge_v4_offer_calibrated.joblib"
 }
