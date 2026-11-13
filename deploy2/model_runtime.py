@@ -60,7 +60,9 @@ def load_model() -> tuple[dict[str, Any], dict[str, Any]]:
             raise RuntimeError(
                 f"Versão incompatível de {key}: artefato={expected.get(key)}, runtime={actual[key]}."
             )
-    if expected.get("python") != actual["python"]:
+    expected_py = ".".join(expected.get("python", "").split(".")[:2])
+    actual_py = ".".join(actual["python"].split(".")[:2])
+    if expected_py and expected_py != actual_py:
         raise RuntimeError(
             f"Versão incompatível de Python: artefato={expected.get('python')}, runtime={actual['python']}."
         )
